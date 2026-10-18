@@ -1,0 +1,26 @@
+[
+  {
+    "id": 3,
+    "name": "assss",
+    "stock": 5,
+    "price": "200"
+  },
+  {
+    "id": 2,
+    "name": "şöşl",
+    "stock": 5,
+    "price": "100"
+  },
+  {
+    "id": 3,
+    "name": "assss",
+    "stock": 5,
+    "price": "200"
+  },
+  {
+    "id": 4,
+    "name": "yeni ürün ",
+    "stock": 20,
+    "price": "2000"
+  }
+]

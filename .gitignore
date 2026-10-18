@@ -1,0 +1,14 @@
+# Node.js bağımlılık klasörleri (GitHub'a asla yüklenmez, çok büyüktür)
+node_modules/
+dist/
+.env
+
+# Geliştirme ortamı ve yerel kilit dosyaları
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQL yerel veritabanı logları veya yedekleri (İsteğe bağlı)
+backend/sql-db/*.log

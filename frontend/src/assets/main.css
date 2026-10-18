@@ -1,0 +1,24 @@
+@import './base.css';
+
+.sepetsidebar{
+    position: fixed;
+    right: 20px;
+    top: 50%;
+}
+
+.navlink{
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+}
+.navlink:hover{
+    font-weight: bold;
+    color: white;
+}
+
+.hakkimizda{
+    background-color: #CFE2FF;
+    padding: 50px;
+    margin-top: 50px;
+    border-radius: 20px;
+}

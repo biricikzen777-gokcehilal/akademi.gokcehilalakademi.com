@@ -1,0 +1,46 @@
+[
+    {
+        "id": 1,
+        "o_no": 243565,
+        "o_products": "nike,adidas,samsung",
+        "o_pids":[],
+        "o_person": "Ahmet ÇINAR",
+        "o_address": "İstanbul",
+        "o_amount": 550,
+        "o_date": "27/06/2026",
+        "o_status": "Hazırlanıyor"
+    },
+    {
+        "id": 2,
+        "o_no": 123421,
+        "o_products": "apple,hp,xiaomi",
+        "o_pids":[],
+        "o_person": "Kerem ATLIHAN",
+        "o_address": "Çanakkale",
+        "o_amount": 2000,
+        "o_date": "13/05/2026",
+        "o_status": "Kargoya Verildi"
+    },
+    {
+        "id": 3,
+        "o_no": 123421,
+        "o_products": "apple,hp,xiaomi",
+        "o_pids":[],
+        "o_person": "Kerem ATLIHAN",
+        "o_address": "Çanakkale",
+        "o_amount": 2000,
+        "o_date": "13/05/2026",
+        "o_status": "Kargoya Verildi"
+    },
+    {
+        "id": 4,
+        "o_no": 123421,
+        "o_products": "apple,hp,xiaomi",
+        "o_pids":[],
+        "o_person": "Kerem ATLIHAN",
+        "o_address": "Çanakkale",
+        "o_amount": 2000,
+        "o_date": "13/05/2026",
+        "o_status": "Kargoya Verildi"
+    }
+]
