@@ -120,11 +120,13 @@
                                             Görseli</label>
                                         <div class="d-flex align-items-center gap-3">
                                             <div class="flex-grow-1">
-                                                <input type="file"
+                                                <!-- DÜZELTİLDİ: Multer'ın dosyayı tanıyabilmesi için name="p_img1" eklendi -->
+                                                <input type="file" name="p_img1"
                                                     class="form-control form-control-sm border-light-subtle shadow-none"
                                                     accept="image/jpeg, image/png, image/webp"
                                                     @change="handleImageChange" required />
                                             </div>
+
                                             <div class="flex-shrink-0">
                                                 <div v-if="imagePreview"
                                                     class="border border-light-subtle rounded p-1 bg-light position-relative">
@@ -183,7 +185,6 @@ export default {
         return {
             isModalOpen: false,
             showSuccessToast: false,
-            // Reaktif form nesnemiz arayüzdeki v-model alanlarıyla birebir eşleşir
             newProduct: {
                 p_name: "",
                 p_stock: 0,
@@ -191,10 +192,9 @@ export default {
                 p_desc: ""
             },
             products: [],
-            productMessage: null,
             baseUrl: "http://localhost:3001",
             imagePreview: null,
-            p_image: null
+            p_image: null // Saf dosya verisi burada tutulacak
         };
     },
     mounted() {
@@ -212,70 +212,21 @@ export default {
         },
         resetForm() {
             this.newProduct = { p_name: "", p_stock: 0, p_price: 0, p_desc: "" };
-            this.removeImage();
-            this.productMessage = null;
-        },
-        // DÜZELTİLDİ: Tekil dosya binary verisi güvenli şekilde hafızaya alınır
-        handleImageChange(event) {
-            const file = event.target.files[0]; // İlk elemanı alarak binary kilidini açıyoruz
-            if (!file) return;
-
-            this.p_image = file;
-            this.imagePreview = URL.createObjectURL(file);
-        },
-
-        removeImage() {
             this.p_image = null;
             this.imagePreview = null;
             const fileInputs = document.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => input.value = '');
         },
+        handleImageChange(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
 
-        // API: Ürün Ekle (POST) - Sütun İsimleriyle Birebir Eşitlendi
-        async addProduct() {
-            try {
-                const formData = new FormData();
-
-                // phpMyAdmin şemanızdaki birebir sütun isimleri
-                formData.append("p_name", this.newProduct.p_name);
-                formData.append("p_stock", this.newProduct.p_stock);
-                formData.append("p_price", this.newProduct.p_price);
-                formData.append("p_desc", this.newProduct.p_desc);
-                formData.append("u_id", sessionStorage.getItem("userId") || "1");
-
-                // KRİTİK ALAN: Backend Multer'ın beklediği "p_img1" ile tam eşitlendi!
-                if (this.p_image) {
-                    formData.append("p_img1", this.p_image);
-                }
-
-                const res = await fetch(`${this.baseUrl}/api/products`, {
-                    method: "POST",
-                    body: formData // Content-Type belirtmiyoruz, tarayıcı boundary değerini otomatik atar
-                });
-
-                if (!res.ok) throw new Error("Sunucu ürünü veritabanına ekleyemedi.");
-
-                // Başarılı Kapatma ve Toast Akışı
-                this.isModalOpen = false;
-                document.body.style.overflow = '';
-                this.showSuccessToast = true;
-
-                setTimeout(() => {
-                    this.showSuccessToast = false;
-                    this.resetForm();
-                    this.getProducts(); // Tabloyu yeniler
-                }, 3000);
-
-            } catch (error) {
-                console.error("Ekleme Hatası:", error.message);
-                alert("Ürün eklenirken bir hata oluştu: " + error.message);
-            }
+            // SIHİRLİ DÜZELTME: Multer'ın hata vermemesi için ilk elemanı ([0]) alıyoruz!
+            this.p_image = files[0];
+            this.imagePreview = URL.createObjectURL(files[0]);
         },
-
-        // API: Ürünleri Listele (GET)
         async getProducts() {
             try {
-                // Tablonuzdaki u_id ilişkisi için session hafızasındaki ID'yi okuyoruz
                 const id = sessionStorage.getItem("userId") || "1";
                 const res = await fetch(`${this.baseUrl}/api/products/${id}`);
                 if (!res.ok) throw new Error("Ürünler listesi çekilemedi.");
@@ -284,7 +235,41 @@ export default {
                 console.error("GET Hatası:", e.message);
             }
         },
-        // API: Ürün Güncelle (PUT) - YENİ SQL ŞEMASINA GÖRE DÜZENLENDİ
+        async addProduct() {
+            try {
+                const formData = new FormData();
+                formData.append("p_name", this.newProduct.p_name);
+                formData.append("p_stock", this.newProduct.p_stock);
+                formData.append("p_price", this.newProduct.p_price);
+                formData.append("p_desc", this.newProduct.p_desc);
+                formData.append("u_id", sessionStorage.getItem("userId") || "1");
+
+                // Backend Multer ile %100 uyumlu anahtar adı: p_img1
+                if (this.p_image) {
+                    formData.append("p_img1", this.p_image);
+                }
+
+                const res = await fetch(`${this.baseUrl}/api/products`, {
+                    method: "POST",
+                    body: formData // Tarayıcı içerik sınırlarını (boundary) otomatik kurgular
+                });
+
+                if (!res.ok) throw new Error("Sunucu ürünü veritabanına ekleyemedi.");
+
+                this.isModalOpen = false;
+                document.body.style.overflow = '';
+                this.showSuccessToast = true;
+
+                setTimeout(() => {
+                    this.showSuccessToast = false;
+                    this.resetForm();
+                    this.getProducts();
+                }, 3000);
+
+            } catch (error) {
+                alert("Ürün eklenirken bir hata oluştu: " + error.message);
+            }
+        },
         async updateProduct(p_id, p_name, p_stock, p_price, p_desc) {
             try {
                 const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, {
@@ -301,11 +286,9 @@ export default {
                 alert("Ürün başarıyla güncellendi.");
                 this.getProducts();
             } catch (error) {
-                console.error("Güncelleme Hatası:", error.message);
                 alert("Hata: " + error.message);
             }
         },
-        // API: Ürün Sil (DELETE)
         async deleteProduct(p_id) {
             if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
             try {
@@ -316,12 +299,13 @@ export default {
                 alert("Ürün silindi.");
                 this.getProducts();
             } catch (error) {
-                console.error("Silme Hatası:", error.message);
+                console.error(error);
             }
         }
     }
 };
 </script>
+
 
 
 <style scoped>

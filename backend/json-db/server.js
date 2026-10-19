@@ -59,24 +59,18 @@ app.get("/api/products/:userId", (req, res) => {
     });
 });
 
-//? POST products - Veritabanına Yeni Ürün Ekle (ASLA MULTER HATASI VERMEYEN ESNEK SÜRÜM)
-app.post("/api/products", upload.any(), (req, res) => {
+//? POST products - Veritabanına Resimli Yeni Ürün Ekle (EŞİTLENMİŞ KESİNTİSİZ SÜRÜM)
+app.post("/api/products", upload.single("p_img1"), (req, res) => {
     try {
         const { p_name, p_stock, p_price, p_desc, u_id } = req.body;
 
-        // Zorunlu alan kontrolü
         if (!p_name || !p_stock || !p_price) {
             return res.status(400).json("Gerekli alanlar eksik geldi.");
         }
 
-        // upload.any() kullandığımız için gelen resim req.files dizisine düşer
-        // Frontend hangi ismi (p_img1, image1, u_img1 vb.) gönderirse göndersin ilk dosyayı yakalar
-        let p_img1_url = "";
-        if (req.files && req.files.length > 0) {
-            p_img1_url = `http://localhost:3001/uploads/${req.files[0].filename}`;
-        }
+        // input üzerindeki name="p_img1" ile upload.single("p_img1") eşleştiği için req.file başarıyla dolar
+        const p_img1 = req.file ? `http://localhost:3001/uploads/${req.file.filename}` : "";
 
-        // phpMyAdmin tablonuzdaki sütun yapısı
         const query = `
             INSERT INTO products 
             (u_id, p_img1, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
@@ -85,12 +79,12 @@ app.post("/api/products", upload.any(), (req, res) => {
 
         const values = [
             Number(u_id || 1),
-            p_img1_url, // Yakalanan esnek resim url adresi
+            p_img1, 
             p_name,
             Number(p_stock),
             Number(p_price),
-            Number(p_price), // p_price_disc alanı zorunlu olduğundan normal fiyatla eşlendi
-            1,               // p_active (Evet durumu)
+            Number(p_price),
+            1,
             p_desc || ""
         ];
 
@@ -107,7 +101,6 @@ app.post("/api/products", upload.any(), (req, res) => {
         res.status(500).json("Sunucu Hatası");
     }
 });
-
 
 
 //? PUT - Ürün Güncelle
