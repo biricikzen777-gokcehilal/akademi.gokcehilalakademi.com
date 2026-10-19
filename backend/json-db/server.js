@@ -238,15 +238,238 @@ app.put("/api/products/:id", (req, res) => {
 });
 
 
-//? DELETE - Ürün Sil
+//? DELETE - Ürün Sil (Eksik kalan rotanız tamamlandı)
 app.delete("/api/products/:id", (req, res) => {
     const id = Number(req.params.id);
     const query = "DELETE FROM products WHERE p_id = ?";
+    
     db.query(query, [id], (err, result) => {
-        if (err) return res.status(500).json("Silme işlemi başarısız.");
-        res.status(200).json({ message: "Ürün silindi." });
+        if (err) {
+            console.error("❌ MySQL DELETE Hatası Detayı:", err.message);
+            return res.status(500).json("Ürün silme işlemi başarısız.");
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json("Silinecek ürün bulunamadı.");
+        }
+        res.status(200).json("Ürün başarıyla silindi.");
     });
 });
+
+// ==========================================================================
+// 4. KULLANICI YÖNETİMİ (ADMIN-USERS) API ROTACILARI
+// ==========================================================================
+
+//? GET - Tüm kullanıcıları listele
+app.get("/api/users", (req, res) => {
+    const query = "SELECT u_id, u_firstName, u_lastName, u_email, u_tel, u_pass, u_role FROM users ORDER BY u_id DESC";
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("❌ MySQL GET Users Hatası:", err.message);
+            return res.status(500).json("Kullanıcı listesi çekilemedi.");
+        }
+        res.status(200).json(results);
+    });
+});
+
+//? POST - Yeni kullanıcı ekle
+app.post("/api/users", (req, res) => {
+    try {
+        const { firstName, lastName, email, tel, pass, role } = req.body;
+
+        if (!firstName || !lastName || !email || !pass) {
+            return res.status(400).json("Gerekli zorunlu alanlar eksik geldi.");
+        }
+
+        const query = "INSERT INTO users (u_firstName, u_lastName, u_email, u_tel, u_pass, u_role) VALUES (?, ?, ?, ?, ?, ?)";
+        const values = [
+            firstName.trim(), 
+            lastName.trim(), 
+            email.trim(), 
+            tel ? tel.trim() : "", 
+            pass, 
+            parseInt(role) || 0
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error("❌ MySQL INSERT User Hatası:", err.message);
+                return res.status(500).json("Kullanıcı veritabanına eklenemedi.");
+            }
+            res.status(201).json("Kullanıcı Başarıyla Eklendi.");
+        });
+    } catch (e) {
+        console.error("Sistemsel Kullanıcı Ekleme Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
+});
+
+//? PUT - Kullanıcı bilgilerini güncelle
+app.put("/api/users/:id", (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { firstName, lastName, email, tel, pass, role } = req.body;
+
+        if (!firstName || !lastName || !email) {
+            return res.status(400).json("Hatalı veri geldi veya zorunlu alanlar boş.");
+        }
+
+        const query = "UPDATE users SET u_firstName = ?, u_lastName = ?, u_email = ?, u_tel = ?, u_pass = ?, u_role = ? WHERE u_id = ?";
+        const values = [
+            firstName.trim(),
+            lastName.trim(),
+            email.trim(),
+            tel ? tel.trim() : "",
+            pass,
+            parseInt(role) || 0,
+            id
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error("❌ MySQL UPDATE User Hatası:", err.message);
+                return res.status(500).json("Kullanıcı güncelleme işlemi başarısız.");
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).json("Güncellenecek kullanıcı bulunamadı.");
+            }
+            res.status(200).json("Kullanıcı başarıyla güncellendi.");
+        });
+    } catch (e) {
+        console.error("Sistemsel Kullanıcı Güncelleme Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
+});
+
+//? DELETE - Kullanıcı sil
+app.delete("/api/users/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const query = "DELETE FROM users WHERE u_id = ?";
+    
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error("❌ MySQL DELETE User Hatası:", err.message);
+            return res.status(500).json("Kullanıcı silme işlemi başarısız.");
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json("Silinecek kullanıcı bulunamadı.");
+        }
+        res.status(200).json("Kullanıcı silindi.");
+    });
+});
+
+// ==========================================================================
+// 5. MESAJLAR YÖNETİMİ (ADMIN-MESSAGES) API ROTACILARI (%100 VERİTABANI UYUMLU)
+// ==========================================================================
+
+//? GET - Tüm iletişim mesajlarını listele
+app.get("/api/messages", (req, res) => {
+    // phpMyAdmin'deki mevcut sütun adlarına göre sorgu güncellendi
+    const query = "SELECT m_id, m_firstName, m_lastName, m_email, m_phone, m_subject, m_message, m_created_at FROM messages ORDER BY m_id DESC";
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("❌ MySQL GET Messages Hatası:", err.message);
+            return res.status(500).json("Mesaj listesi çekilemedi.");
+        }
+        res.status(200).json(results);
+    });
+});
+
+//? POST - Yeni mesaj ekle (İletişim Formundan Gelen Veriyi Kaydeder)
+app.post("/api/messages", (req, res) => {
+    try {
+        const { firstName, lastName, email, code, tel, subject, message } = req.body;
+
+        if (!firstName || !lastName || !email || !message) {
+            return res.status(400).json("Gerekli alanlar eksik geldi.");
+        }
+
+        // Ülke kodu ve telefon numarasını tablonuzdaki tek bir alan olan m_phone'a birleştirerek yazıyoruz
+        const combinedPhone = code ? `${code} ${tel}` : tel;
+
+        // Tablonuzda bulunan tam sütun listesi: m_firstName, m_lastName, m_email, m_phone, m_subject, m_message
+        const query = `
+            INSERT INTO messages 
+            (m_firstName, m_lastName, m_email, m_phone, m_subject, m_message) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        
+        const values = [
+            firstName.trim(), 
+            lastName.trim(), 
+            email.trim(), 
+            combinedPhone ? combinedPhone.trim() : "", 
+            subject ? subject.trim() : "Teşekkür", 
+            message.trim()
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error("❌ MySQL INSERT Message Hatası Detayı:", err.message);
+                return res.status(500).json("Sunucu ürünü veritabanına ekleyemedi.");
+            }
+            res.status(201).json("Mesaj başarıyla iletildi.");
+        });
+    } catch (e) {
+        console.error("Sistemsel Mesaj Kayıt Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
+});
+
+//? DELETE - İletişim mesajını sil
+app.delete("/api/messages/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const query = "DELETE FROM messages WHERE m_id = ?";
+    
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error("❌ MySQL DELETE Message Hatası:", err.message);
+            return res.status(500).json("Mesaj silme işlemi başarısız.");
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json("Silinecek mesaj bulunamadı.");
+        }
+        res.status(200).json("Mesaj silindi.");
+    });
+});
+
+
+//? PUT - Mesaj yanıt durumunu güncelle
+app.put("/api/messages/:id", (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { status } = req.body;
+
+        if (status === undefined || status === null) {
+            return res.status(400).json("Durum bilgisi eksik geldi.");
+        }
+
+        const query = "UPDATE messages SET m_status = ? WHERE m_id = ?";
+        db.query(query, [parseInt(status), id], (err, result) => {
+            if (err) {
+                console.error("❌ MySQL UPDATE Message Hatası:", err.message);
+                return res.status(500).json("Mesaj durumu güncellenemedi.");
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).json("Güncellenecek mesaj bulunamadı.");
+            }
+            res.status(200).json("Mesaj başarıyla güncellendi.");
+        });
+    } catch (e) {
+        console.error("Sistemsel Mesaj Güncelleme Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
+});
+
+
+
+// ==========================================
+// 6. SERVER DİNLEME MOTORU
+// ==========================================
+const PORT = 3001;
+app.listen(PORT, () => {
+    console.log(`🚀 Server ${PORT} portu üzerinde aktif olarak çalışıyor.`);
+});
+
 
 // Sunucu Kilit Açma Satırı
 const PORT = 3001;
