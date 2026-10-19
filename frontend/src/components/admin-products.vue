@@ -249,6 +249,7 @@ export default {
                     formData.append("p_img1", this.p_image);
                 }
 
+
                 const res = await fetch(`${this.baseUrl}/api/products`, {
                     method: "POST",
                     body: formData // Tarayıcı içerik sınırlarını (boundary) otomatik kurgular
