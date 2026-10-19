@@ -1,159 +1,120 @@
 <template>
     <div class="products container-fluid p-0 m-0" style="font-family: sans-serif;">
         <!-- ÜST BAŞLIK VE EKLEME BUTONU -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 pt-3 px-3">
             <h4 class="fw-semibold text-dark m-0" style="font-size: 20px;">Ürün Yönetimi</h4>
-            <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3"
-                @click="openModal">
+            <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
                 <i class="bi bi-plus-circle"></i> Yeni Ürün Ekle
             </button>
         </div>
 
         <!-- ÜRÜN LİSTELEME TABLOSU -->
-        <div class="card border border-light-subtle shadow-sm rounded-2 overflow-hidden">
+        <div class="card border border-light-subtle shadow-sm rounded-2 overflow-hidden mx-3 mb-3">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                <table class="table table-hover align-middle mb-0 p-0 m-0" style="font-size: 13px;">
                     <thead class="table-light text-muted fw-normal">
                         <tr>
-                            <th scope="col" class="ps-3 fw-normal" style="width: 80px;">ID</th>
-                            <th scope="col" class="fw-normal">Ürün Adı</th>
-                            <th scope="col" class="fw-normal" style="width: 110px;">Stok</th>
-                            <th scope="col" class="fw-normal" style="width: 140px;">Fiyat (TL)</th>
-                            <th scope="col" class="fw-normal" style="width: 140px;">KDV'li Fiyat</th>
-                            <th scope="col" class="fw-normal">Açıklama</th>
-                            <th scope="col" class="text-end pe-3 fw-normal" style="width: 180px;">İşlemler</th>
+                            <th scope="col" class="fw-normal p-0 m-0 text-center" style="width: 60px;">ID</th>
+                            <th scope="col" class="fw-normal p-0 m-0">Ürün Adı</th>
+                            <th scope="col" class="fw-normal p-0 m-0" style="width: 100px;">Stok</th>
+                            <th scope="col" class="fw-normal p-0 m-0" style="width: 130px;">Fiyat (TL)</th>
+                            <th scope="col" class="fw-normal p-0 m-0" style="width: 130px;">KDV'li Fiyat</th>
+                            <th scope="col" class="fw-normal p-0 m-0">Açıklama</th>
+                            <th scope="col" class="text-end fw-normal p-0 m-0" style="width: 160px;">İşlemler</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="product in products" :key="product.p_id">
-                            <th scope="row" class="ps-3 text-secondary fw-normal">#{{ product.p_id }}</th>
-                            <td>
-                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
-                                    type="text" v-model="product.p_name">
+                        <tr v-for="product in products" :key="product.p_id" class="p-0 m-0">
+                            <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ product.p_id }}</th>
+                            <td class="p-0 m-0">
+                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="product.p_name">
                             </td>
-                            <td>
-                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
-                                    type="number" min="0" v-model.number="product.p_stock">
+                            <td class="p-0 m-0">
+                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="number" min="0" v-model.number="product.p_stock">
                             </td>
-                            <td>
-                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
-                                    type="text" v-model="product.p_price">
+                            <td class="p-0 m-0">
+                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="product.p_price">
                             </td>
-                            <td>
-                                <span class="text-success fw-medium">
+                            <td class="p-0 m-0">
+                                <span class="text-success fw-medium ps-1" style="font-size: 13px;">
                                     {{ (Number(product.p_price || 0) * 1.2).toFixed(2) }} TL
                                 </span>
                             </td>
-                            <td>
-                                <textarea class="form-control form-control-sm border-light-subtle"
-                                    style="font-size: 13px;" rows="1" v-model="product.p_desc"></textarea>
+                            <td class="p-0 m-0">
+                                <textarea class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px; resize: none;" rows="1" v-model="product.p_desc"></textarea>
                             </td>
-                            <td class="text-end pe-3">
-                                <div class="d-inline-flex gap-2">
-                                    <button
-                                        @click="updateProduct(product.p_id, product.p_name, product.p_stock, product.p_price, product.p_desc)"
-                                        class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 12px;">
+                            <td class="text-end p-0 m-0">
+                                <div class="d-inline-flex gap-1 me-1">
+                                    <button @click="updateProduct(product.p_id, product.p_name, product.p_stock, product.p_price, product.p_desc)"
+                                        class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;">
                                         <i class="bi bi-save"></i> Güncelle
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 12px;"
-                                        @click="deleteProduct(product.p_id)">
+                                    <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;" @click="deleteProduct(product.p_id)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                         <tr v-if="products.length === 0">
-                            <td colspan="7" class="text-center text-muted py-4">Henüz eklenmiş bir ürün bulunmuyor.</td>
+                            <td colspan="7" class="text-center text-muted py-3">Henüz eklenmiş bir ürün bulunmuyor.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- TELEPORTLU ÜRÜN EKLEME MODALI -->
+        <!-- TELEPORTLU 3 RESİMLİ ÜRÜN EKLEME MODALI -->
         <Teleport to="body">
             <div v-if="isModalOpen" class="custom-modal-backdrop" @click.self="closeModal">
                 <div class="custom-modal-dialog">
                     <div class="custom-modal-content border border-light-subtle rounded-2 shadow-lg">
-                        <div
-                            class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
-                            <h5 class="m-0 text-dark fw-semibold" style="font-size: 15px;">Yeni Ürün Ekle</h5>
-                            <button type="button" @click="closeModal" class="btn-close" style="font-size: 12px;"
-                                aria-label="Kapat"></button>
+                        <div class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
+                            <h5 class="m-0 text-dark fw-semibold" style="font-size: 15px;">Yeni Ürün Ekle (3 Resimli)</h5>
+                            <button type="button" @click="closeModal" class="btn-close" style="font-size: 12px;" aria-label="Kapat"></button>
                         </div>
                         <form @submit.prevent="addProduct">
                             <div class="p-3 bg-white" style="font-size: 13px;">
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün
-                                            Adı*</label>
-                                        <input type="text"
-                                            class="form-control form-control-sm border-light-subtle shadow-none"
-                                            v-model="newProduct.p_name" required
-                                            placeholder="Örn: Ruhsal Şifa Programı">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Adı*</label>
+                                        <input type="text" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newProduct.p_name" required placeholder="Örn: Ruhsal Şifa Programı">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Stok
-                                            Miktarı*</label>
-                                        <input type="number" min="0"
-                                            class="form-control form-control-sm border-light-subtle shadow-none"
-                                            v-model.number="newProduct.p_stock" required placeholder="Örn: 100">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Stok Miktarı*</label>
+                                        <input type="number" min="0" class="form-control form-control-sm border-light-subtle shadow-none" v-model.number="newProduct.p_stock" required placeholder="Örn: 100">
                                     </div>
-                                    <!-- ÜRÜN FİYATI (100 TL aralıklarla artış sağlandı) -->
                                     <div class="col-6">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Fiyatı
-                                            (TL)*</label>
-                                        <input type="number" step="100" min="0"
-                                            class="form-control form-control-sm border-light-subtle shadow-none"
-                                            v-model.number="newProduct.p_price" required placeholder="Örn: 350.00">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Fiyatı (TL)*</label>
+                                        <input type="number" step="100" min="0" class="form-control form-control-sm border-light-subtle shadow-none" v-model.number="newProduct.p_price" required placeholder="Örn: 350.00">
                                     </div>
-
                                     <div class="col-12">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün
-                                            Açıklaması*</label>
-                                        <textarea class="form-control form-control-sm border-light-subtle shadow-none"
-                                            rows="3" v-model="newProduct.p_desc" required
-                                            placeholder="Ürün detaylarını giriniz..."></textarea>
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Açıklaması*</label>
+                                        <textarea class="form-control form-control-sm border-light-subtle shadow-none" rows="3" v-model="newProduct.p_desc" required placeholder="Ürün detaylarını giriniz..."></textarea>
                                     </div>
-                                    <div class="col-12 border-top pt-2 mt-2">
-                                        <label class="form-label text-success mb-1" style="font-weight: 500;">Ürün
-                                            Görseli</label>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="flex-grow-1">
-                                                <!-- DÜZELTİLDİ: Multer'ın dosyayı tanıyabilmesi için name="p_img1" eklendi -->
-                                                <input type="file" name="p_img1"
-                                                    class="form-control form-control-sm border-light-subtle shadow-none"
-                                                    accept="image/jpeg, image/png, image/webp"
-                                                    @change="handleImageChange" required />
-                                            </div>
 
-                                            <div class="flex-shrink-0">
-                                                <div v-if="imagePreview"
-                                                    class="border border-light-subtle rounded p-1 bg-light position-relative">
-                                                    <img :src="imagePreview" class="rounded object-fit-cover"
-                                                        style="width: 60px; height: 45px; display: block;"
-                                                        alt="Önizleme">
-                                                    <button type="button" @click="removeImage"
-                                                        class="btn btn-danger position-absolute p-0 d-flex align-items-center justify-content-center rounded-circle"
-                                                        style="width: 16px; height: 16px; top: -5px; right: -5px; font-size: 9px;">
-                                                        <i class="bi bi-x"></i>
-                                                    </button>
-                                                </div>
-                                                <div v-else
-                                                    class="text-muted border border-dashed border-light-subtle rounded text-center d-flex align-items-center justify-content-center bg-light"
-                                                    style="width: 60px; height: 45px;">
-                                                    <i class="bi bi-image opacity-50" style="font-size: 16px;"></i>
-                                                </div>
-                                            </div>
+                                    <!-- 3 AYRI RESİM SEÇİCİ ALANI (İsimler SQL Sütunlarıyla Eşitlendi) -->
+                                    <div class="col-12 border-top pt-2 mt-2">
+                                        <label class="form-label text-success mb-2" style="font-weight: 500;">Ürün Görselleri (3 Resim Alanı)</label>
+                                        
+                                        <div class="mb-2 border border-light-subtle p-2 rounded bg-light-subtle">
+                                            <label class="form-label text-muted small mb-1">Görsel 1 (Ana Resim)*</label>
+                                            <input type="file" name="p_img1" class="form-control form-control-sm shadow-none" accept="image/*" @change="handleImageChange($event, 1)" required />
+                                        </div>
+
+                                        <div class="mb-2 border border-light-subtle p-2 rounded bg-light-subtle">
+                                            <label class="form-label text-muted small mb-1">Görsel 2*</label>
+                                            <input type="file" name="p_img2" class="form-control form-control-sm shadow-none" accept="image/*" @change="handleImageChange($event, 2)" required />
+                                        </div>
+
+                                        <div class="border border-light-subtle p-2 rounded bg-light-subtle">
+                                            <label class="form-label text-muted small mb-1">Görsel 3*</label>
+                                            <input type="file" name="p_img3" class="form-control form-control-sm shadow-none" accept="image/*" @change="handleImageChange($event, 3)" required />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2"
-                                style="font-size: 13px;">
-                                <button type="button"
-                                    class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3"
-                                    @click="closeModal">Vazgeç</button>
+                            <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2" style="font-size: 13px;">
+                                <button type="button" class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3" @click="closeModal">Vazgeç</button>
                                 <button type="submit" class="btn btn-sm btn-success py-1_5 px-3">Ürünü Kaydet</button>
                             </div>
                         </form>
@@ -162,7 +123,8 @@
             </div>
         </Teleport>
 
-        <!-- TOAST BİLDİRİMİ -->
+
+        <!-- BAŞARILI TOAST BİLDİRİMİ -->
         <Teleport to="body">
             <Transition name="toast-fade">
                 <div v-if="showSuccessToast" class="custom-toast-overlay">
@@ -193,8 +155,11 @@ export default {
             },
             products: [],
             baseUrl: "http://localhost:3001",
-            imagePreview: null,
-            p_image: null // Saf dosya verisi burada tutulacak
+            p_images: {
+                1: null,
+                2: null,
+                3: null
+            }
         };
     },
     mounted() {
@@ -212,18 +177,14 @@ export default {
         },
         resetForm() {
             this.newProduct = { p_name: "", p_stock: 0, p_price: 0, p_desc: "" };
-            this.p_image = null;
-            this.imagePreview = null;
+            this.p_images = { 1: null, 2: null, 3: null };
             const fileInputs = document.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => input.value = '');
         },
-        handleImageChange(event) {
+        handleImageChange(event, index) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-
-            // SIHİRLİ DÜZELTME: Multer'ın hata vermemesi için ilk elemanı ([0]) alıyoruz!
-            this.p_image = files[0];
-            this.imagePreview = URL.createObjectURL(files[0]);
+            this.p_images[index] = files[0]; 
         },
         async getProducts() {
             try {
@@ -244,15 +205,13 @@ export default {
                 formData.append("p_desc", this.newProduct.p_desc);
                 formData.append("u_id", sessionStorage.getItem("userId") || "1");
 
-                // Backend Multer ile %100 uyumlu anahtar adı: p_img1
-                if (this.p_image) {
-                    formData.append("p_img1", this.p_image);
-                }
+                if (this.p_images[1]) formData.append("p_img1", this.p_images[1]);
+                if (this.p_images[2]) formData.append("p_img2", this.p_images[2]);
+                if (this.p_images[3]) formData.append("p_img3", this.p_images[3]);
 
-
-                const res = await fetch(`${this.baseUrl}/api/products`, {
+                const res = await fetch(`${this.baseUrl}/api/addProductSecure`, {
                     method: "POST",
-                    body: formData // Tarayıcı içerik sınırlarını (boundary) otomatik kurgular
+                    body: formData
                 });
 
                 if (!res.ok) throw new Error("Sunucu ürünü veritabanına ekleyemedi.");
@@ -307,8 +266,6 @@ export default {
 };
 </script>
 
-
-
 <style scoped>
 .custom-modal-backdrop {
     position: fixed;
@@ -322,24 +279,20 @@ export default {
     justify-content: center;
     z-index: 100000 !important;
 }
-
 .custom-modal-dialog {
     width: 100%;
     max-width: 500px;
     margin: 1.75rem;
 }
-
 .custom-modal-content {
     background: #ffffff;
     display: flex;
     flex-direction: column;
 }
-
 .form-control:focus {
     border-color: #198754 !important;
     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
 }
-
 .custom-toast-overlay {
     position: fixed;
     top: 0;
@@ -353,7 +306,6 @@ export default {
     justify-content: center;
     z-index: 100100 !important;
 }
-
 .custom-toast-card {
     background: #ffffff;
     padding: 20px 35px;
@@ -362,7 +314,6 @@ export default {
     align-items: center;
     gap: 10px;
 }
-
 .toast-icon-wrapper {
     width: 44px;
     height: 44px;
@@ -371,14 +322,10 @@ export default {
     justify-content: center;
     font-size: 22px;
 }
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
+.toast-fade-enter-active, .toast-fade-leave-active {
     transition: all 0.25s ease;
 }
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
+.toast-fade-enter-from, .toast-fade-leave-to {
     opacity: 0;
     transform: scale(0.92);
 }

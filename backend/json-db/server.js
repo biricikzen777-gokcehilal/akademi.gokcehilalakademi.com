@@ -93,43 +93,90 @@ app.get("/api/products/:userId", (req, res) => {
     });
 });
 
-//? POST secure product - 3 Resimli Dinamik Ürün Klasörü Oluşturan Ana Sistem
-app.post("/api/addProductSecure", upload.any(), (req, res) => {
+/// ==========================================================================
+// 1. 3 RESMİ AYRI AYRI YAKALAYAN VE KLASÖRLEYEN MULTER MOTORU
+// ==========================================================================
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        // Yardımcı küçük harfe çevirme mimarisi
+        const maps = { 'ç': 'c', 'Ç': 'c', 'ğ': 'g', 'Ğ': 'g', 'ı': 'i', 'I': 'i', 'İ': 'i', 'ö': 'o', 'Ö': 'o', 'ş': 's', 'Ş': 's', 'ü': 'u', 'Ü': 'u' };
+        let folderName = (req.body.p_name || "adsiz-urun").toString().toLowerCase();
+        Object.keys(maps).forEach(key => { folderName = folderName.replaceAll(key, maps[key]); });
+        folderName = folderName.replace(/[^a-z0-9]/g, '');
+
+        const targetPath = path.join(__dirname, "uploads", folderName);
+
+        // Klasör yoksa anında otomatik olarak diskte oluşturulur
+        if (!fs.existsSync(targetPath)) {
+            fs.mkdirSync(targetPath, { recursive: true });
+        }
+        cb(null, targetPath);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        // Frontend'den gelen p_img1, p_img2, p_img3 alan isimlerine göre resimleri img1, img2, img3 yapar
+        let fieldNumber = "1";
+        if (file.fieldname === "p_img2") fieldNumber = "2";
+        if (file.fieldname === "p_img3") fieldNumber = "3";
+        
+        cb(null, `img${fieldNumber}${ext}`);
+    }
+});
+const upload = multer({ storage: storage });
+
+// ==========================================================================
+// 2. 3 RESİMLİ VE 3 SÜTUNLU YENİ ÜRÜN EKLEME POST ROTANIZ (SQL GÜVENLİ SÜRÜM)
+// ==========================================================================
+app.post("/api/addProductSecure", upload.fields([
+    { name: 'p_img1', maxCount: 1 },
+    { name: 'p_img2', maxCount: 1 },
+    { name: 'p_img3', maxCount: 1 }
+]), (req, res) => {
     try {
         const { p_name, p_stock, p_price, p_desc, u_id } = req.body;
 
-        if (!p_name || !p_stock || !p_price) {
+        if (!p_name || p_stock === undefined || !p_price) {
             return res.status(400).json("Gerekli alanlar eksik geldi.");
         }
 
-        const folderName = slugifyFolderName(p_name);
-        
-        // Yüklenen dosyaları virgülle birleştirip tam istediğiniz formatta hazırlıyoruz
-        let p_img1 = "";
-        if (req.files && req.files.length > 0) {
-            const imgPaths = req.files.map(file => `/uploads/${folderName}/${file.filename}`);
-            p_img1 = imgPaths.join(","); // Örn: /uploads/ruhsalsifaprogrami/img1.jpg,/uploads/ruhsalsifaprogrami/img2.png
-        }
+        // Klasör ismini url yolları için tekrar sadeleştiriyoruz
+        const maps = { 'ç': 'c', 'Ç': 'c', 'ğ': 'g', 'Ğ': 'g', 'ı': 'i', 'I': 'i', 'İ': 'i', 'ö': 'o', 'Ö': 'o', 'ş': 's', 'Ş': 's', 'ü': 'u', 'Ü': 'u' };
+        let folderName = p_name.toString().toLowerCase();
+        Object.keys(maps).forEach(key => { folderName = folderName.replaceAll(key, maps[key]); });
+        folderName = folderName.replace(/[^a-z0-9]/g, '');
 
+        // phpMyAdmin'deki 3 bağımsız sütun için yüklenen dosyaların yolları hazırlanır
+        const img1_path = req.files && req.files['p_img1'] ? `/uploads/${folderName}/${req.files['p_img1'][0].filename}` : "";
+        const img2_path = req.files && req.files['p_img2'] ? `/uploads/${folderName}/${req.files['p_img2'][0].filename}` : "";
+        const img3_path = req.files && req.files['p_img3'] ? `/uploads/${folderName}/${req.files['p_img3'][0].filename}` : "";
+
+        // phpMyAdmin'deki 3 resimli güncel veritabanı şemanızla %100 uyumlu sorgu
         const query = `
             INSERT INTO products 
-            (u_id, p_img1, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (u_id, p_img1, p_img2, p_img3, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
+
+        // KRİTİK DÜZELTME: DECIMAL(10,2) alanları için fiyat verisi float sayısına zorlanıyor, stock integer yapılıyor
+        const formattedPrice = parseFloat(p_price) || 0.00;
+        const formattedStock = parseInt(p_stock) || 0;
 
         const values = [
             Number(u_id || 1),
-            p_img1, 
+            img1_path, 
+            img2_path, 
+            img3_path, 
             p_name,
-            Number(p_stock),
-            Number(p_price),
-            Number(p_price),
-            1,
+            formattedStock,
+            formattedPrice,
+            formattedPrice, // p_price_disc sütunu için varsayılan indirimli fiyat
+            1,              // p_active sütunu için varsayılan aktif (1) durumu
             p_desc || ""
         ];
 
         db.query(query, values, (err, result) => {
             if (err) {
+                // SQL tarafında bir takılma olursa terminal ekranına hatanın tam ismini basar
                 console.error("❌ MySQL INSERT Hatası Detayı:", err.message);
                 return res.status(500).json("Sunucu ürünü veritabanına ekleyemedi.");
             }
@@ -142,16 +189,54 @@ app.post("/api/addProductSecure", upload.any(), (req, res) => {
     }
 });
 
-//? PUT - Ürün Güncelle
+//? PUT - Ürün Güncelle (SQL ŞEMASINA VE VERİ TİPLERİNE TAM UYUMLU)
 app.put("/api/products/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const { p_name, p_stock, p_price, p_desc } = req.body;
-    const query = "UPDATE products SET p_name = ?, p_stock = ?, p_price = ?, p_desc = ? WHERE p_id = ?";
-    db.query(query, [p_name, Number(p_stock), Number(p_price), p_desc, id], (err, result) => {
-        if (err) return res.status(500).json("Güncelleme başarısız.");
-        res.status(200).json({ message: "Ürün güncellendi." });
-    });
+    try {
+        const id = Number(req.params.id);
+        const { p_name, p_stock, p_price, p_desc } = req.body;
+
+        if (!p_name || p_stock === undefined || !p_price) {
+            return res.status(400).json("Hatalı veri geldi veya zorunlu alanlar boş.");
+        }
+
+        // KRİTİK ADIM: DECIMAL ve INT alanları için güvenli sayısal dönüşümler zorlanıyor
+        const formattedPrice = parseFloat(p_price) || 0.00;
+        const formattedStock = parseInt(p_stock) || 0;
+
+        // phpMyAdmin şemanızdaki birebir sütun isimleri ve birincil anahtarınız (p_id) kilitlendi
+        const query = `
+            UPDATE products 
+            SET p_name = ?, p_stock = ?, p_price = ?, p_price_disc = ?, p_desc = ? 
+            WHERE p_id = ?
+        `;
+
+        const values = [
+            p_name.trim(),
+            formattedStock,
+            formattedPrice,
+            formattedPrice, // İndirimli fiyat alanının da güncellenmesi için
+            p_desc || "",
+            id
+        ];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error("❌ MySQL UPDATE Hatası Detayı:", err.message);
+                return res.status(500).json("Güncelleme başarısız.");
+            }
+            
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Güncellenecek ürün bulunamadı." });
+            }
+
+            res.status(200).json({ message: "Ürün başarıyla güncellendi." });
+        });
+    } catch (e) {
+        console.error("Sistemsel Güncelleme Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
 });
+
 
 //? DELETE - Ürün Sil
 app.delete("/api/products/:id", (req, res) => {
