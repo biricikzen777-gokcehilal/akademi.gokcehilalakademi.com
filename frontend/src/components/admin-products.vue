@@ -1,428 +1,400 @@
 <template>
-    <div class="products">
-        <!--! Ürünler -->
-        <h3>Ürünler:</h3>
-        <button style="float: right;" type="button" class="btn-sm btn btn-outline-success mb-4" data-bs-toggle="modal"
-            data-bs-target="#addproduct">
-            Ürün Ekle
-        </button>
+    <div class="products container-fluid p-0 m-0" style="font-family: sans-serif;">
+        <!-- ÜST BAŞLIK VE EKLEME BUTONU -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-semibold text-dark m-0" style="font-size: 20px;">Ürün Yönetimi</h4>
+            <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3"
+                @click="openModal">
+                <i class="bi bi-plus-circle"></i> Yeni Ürün Ekle
+            </button>
+        </div>
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Ad</th>
-                    <th scope="col">Stok</th>
-                    <th scope="col">Fiyat</th>
-                    <th scope="col">KDV'li Fiyat</th>
-                    <th scope="col">Açıklama</th>
-                    <th scope="col">İşlem</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="product, index in products" :key="product.p_id">
-                    <!-- <th>{{ index + 1 }}</th> -->
-                    <th scope="row">{{ product.p_id }}</th>
-                    <td><input class="form-control" type="text" v-model="product.p_name"> </td>
-                    <td><input class="form-control" type="number" min="0" v-model="product.p_stock"> </td>
-                    <td><input class="form-control" type="text" v-model="product.p_price"> </td>
-                    <td>{{ product.p_price * 1.2 }} </td>
-                    <td><textarea class="form-control" type="text" v-model="product.p_desc"></textarea></td>
-                    <td>
-                        <button
-                            @click="updateProduct(product.p_id, product.p_name, product.p_stock, product.p_price, product.p_desc)"
-                            class="btn-sm btn btn-outline-primary" type="submit">Güncelle</button>
-                        <button style="margin-left: 10px;" class="btn-sm btn btn-outline-danger"
-                            @click="deleteProduct(product.p_id)">Sil</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!--! Ürün Ekleme Modalı (Navbar Öncelikli Kesin Düzen) -->
-     
-        <div class="modal fade" id="addproduct" tabindex="-1" aria-hidden="true" style="z-index: 2050 !important;">
-            <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 2051 !important;">
-                <div class="modal-content border-0 shadow-lg">
-
-                    <div class="modal-header bg-success text-white py-3">
-                        <h1 class="modal-title fs-5 fw-bold" id="exampleModalLabel">Yeni Ürün Ekle</h1>
-                        <button type="button" id="closeAddProductModal" class="btn-close btn-close-white"
-                            data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-
-                    <!--! Ürün ekleme formu -->
-                    <form @submit.prevent="addProduct()">
-                        <div class="modal-body p-4 bg-white">
-                            <div class="row g-3">
-
-                                <!-- ÜRÜN ADI -->
-                                <div class="col-12">
-                                    <label class="form-label fw-semibold text-dark">Ürün Adı*</label>
-                                    <input type="text" class="form-control py-2" v-model="newProduct.p_name" required
-                                        placeholder="Örn: Ruhsal Şifa Programı">
+        <!-- ÜRÜN LİSTELEME TABLOSU -->
+        <div class="card border border-light-subtle shadow-sm rounded-2 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <thead class="table-light text-muted fw-normal">
+                        <tr>
+                            <th scope="col" class="ps-3 fw-normal" style="width: 80px;">ID</th>
+                            <th scope="col" class="fw-normal">Ürün Adı</th>
+                            <th scope="col" class="fw-normal" style="width: 110px;">Stok</th>
+                            <th scope="col" class="fw-normal" style="width: 140px;">Fiyat (TL)</th>
+                            <th scope="col" class="fw-normal" style="width: 140px;">KDV'li Fiyat</th>
+                            <th scope="col" class="fw-normal">Açıklama</th>
+                            <th scope="col" class="text-end pe-3 fw-normal" style="width: 180px;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="product in products" :key="product.p_id">
+                            <th scope="row" class="ps-3 text-secondary fw-normal">#{{ product.p_id }}</th>
+                            <td>
+                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
+                                    type="text" v-model="product.p_name">
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
+                                    type="number" min="0" v-model.number="product.p_stock">
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm border-light-subtle" style="font-size: 13px;"
+                                    type="text" v-model="product.p_price">
+                            </td>
+                            <td>
+                                <span class="text-success fw-medium">
+                                    {{ (Number(product.p_price || 0) * 1.2).toFixed(2) }} TL
+                                </span>
+                            </td>
+                            <td>
+                                <textarea class="form-control form-control-sm border-light-subtle"
+                                    style="font-size: 13px;" rows="1" v-model="product.p_desc"></textarea>
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex gap-2">
+                                    <button
+                                        @click="updateProduct(product.p_id, product.p_name, product.p_stock, product.p_price, product.p_desc)"
+                                        class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 12px;">
+                                        <i class="bi bi-save"></i> Güncelle
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 12px;"
+                                        @click="deleteProduct(product.p_id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
+                            </td>
+                        </tr>
+                        <tr v-if="products.length === 0">
+                            <td colspan="7" class="text-center text-muted py-4">Henüz eklenmiş bir ürün bulunmuyor.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                                <!-- STOK VE FİYAT (2 Eşit Sütun) -->
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label fw-semibold text-dark">Stok Miktarı*</label>
-                                    <input type="number" min="1" class="form-control py-2" v-model="newProduct.p_stock"
-                                        required placeholder="Örn: 100">
-                                </div>
+        <!-- TELEPORTLU ÜRÜN EKLEME MODALI -->
+        <Teleport to="body">
+            <div v-if="isModalOpen" class="custom-modal-backdrop" @click.self="closeModal">
+                <div class="custom-modal-dialog">
+                    <div class="custom-modal-content border border-light-subtle rounded-2 shadow-lg">
+                        <div
+                            class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
+                            <h5 class="m-0 text-dark fw-semibold" style="font-size: 15px;">Yeni Ürün Ekle</h5>
+                            <button type="button" @click="closeModal" class="btn-close" style="font-size: 12px;"
+                                aria-label="Kapat"></button>
+                        </div>
+                        <form @submit.prevent="addProduct">
+                            <div class="p-3 bg-white" style="font-size: 13px;">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün
+                                            Adı*</label>
+                                        <input type="text"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newProduct.p_name" required
+                                            placeholder="Örn: Ruhsal Şifa Programı">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Stok
+                                            Miktarı*</label>
+                                        <input type="number" min="0"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model.number="newProduct.p_stock" required placeholder="Örn: 100">
+                                    </div>
+                                    <!-- ÜRÜN FİYATI (100 TL aralıklarla artış sağlandı) -->
+                                    <div class="col-6">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Fiyatı
+                                            (TL)*</label>
+                                        <input type="number" step="100" min="0"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model.number="newProduct.p_price" required placeholder="Örn: 350.00">
+                                    </div>
 
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label fw-semibold text-dark">Ürün Fiyatı (TL)*</label>
-                                    <input type="text" class="form-control py-2" v-model.number="newProduct.p_price"
-                                        pattern="[0-9]+([.][0-9]{1,2})?" required placeholder="Örn: 350.00">
-                                </div>
-
-                                <!-- AÇIKLAMA -->
-                                <div class="col-12">
-                                    <label class="form-label fw-semibold text-dark">Ürün Açıklaması*</label>
-                                    <textarea class="form-control" rows="2" v-model="newProduct.p_desc" required
-                                        placeholder="Ürünü anlatınız."></textarea>
-                                </div>
-
-                                <!-- FOTOĞRAFLAR VE ÖNİZLEME (2 Eşit Sütun) -->
-                                <div class="col-12 border-top pt-3 mt-3">
-                                    <label class="form-label fw-bold text-success mb-2" style="font-size: 15px;">Ürün
-                                        Görseli</label>
-                                    <div class="row align-items-center g-3">
-                                        <div class="col-12 col-sm-6">
-                                            <label class="form-label small text-secondary">Ana Fotoğraf
-                                                (JPEG/PNG/WEBP):</label>
-                                            <input ref="imageInput1" type="file" class="form-control py-1"
-                                                accept="image/jpeg, image/png, image/webp"
-                                                @change="handleImageChange($event, 1)" required />
-                                        </div>
-                                        <div
-                                            class="col-12 col-sm-6 d-flex justify-content-center justify-content-sm-start">
-                                            <div v-if="imagePreview1"
-                                                class="image-preview-box p-1 border rounded bg-light shadow-sm">
-                                                <img :src="imagePreview1"
-                                                    style="width: 100px; height: 70px; object-fit: cover; display: block; border-radius: 4px;"
-                                                    alt="Seçilen Ürün Fotoğrafı">
+                                    <div class="col-12">
+                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün
+                                            Açıklaması*</label>
+                                        <textarea class="form-control form-control-sm border-light-subtle shadow-none"
+                                            rows="3" v-model="newProduct.p_desc" required
+                                            placeholder="Ürün detaylarını giriniz..."></textarea>
+                                    </div>
+                                    <div class="col-12 border-top pt-2 mt-2">
+                                        <label class="form-label text-success mb-1" style="font-weight: 500;">Ürün
+                                            Görseli</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="flex-grow-1">
+                                                <input type="file"
+                                                    class="form-control form-control-sm border-light-subtle shadow-none"
+                                                    accept="image/jpeg, image/png, image/webp"
+                                                    @change="handleImageChange" required />
                                             </div>
-                                            <div v-else
-                                                class="text-muted small border border-dashed rounded text-center d-flex align-items-center justify-content-center"
-                                                style="width: 100px; height: 70px; background-color: #fafafa; border-style: dashed !important;">
-                                                <i class="bi bi-image fs-4 opacity-50"></i>
+                                            <div class="flex-shrink-0">
+                                                <div v-if="imagePreview"
+                                                    class="border border-light-subtle rounded p-1 bg-light position-relative">
+                                                    <img :src="imagePreview" class="rounded object-fit-cover"
+                                                        style="width: 60px; height: 45px; display: block;"
+                                                        alt="Önizleme">
+                                                    <button type="button" @click="removeImage"
+                                                        class="btn btn-danger position-absolute p-0 d-flex align-items-center justify-content-center rounded-circle"
+                                                        style="width: 16px; height: 16px; top: -5px; right: -5px; font-size: 9px;">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                                <div v-else
+                                                    class="text-muted border border-dashed border-light-subtle rounded text-center d-flex align-items-center justify-content-center bg-light"
+                                                    style="width: 60px; height: 45px;">
+                                                    <i class="bi bi-image opacity-50" style="font-size: 16px;"></i>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
-                        </div>
-
-                        <div class="modal-footer bg-light p-3">
-                            <!-- İstediğiniz gibi buton metni sadece Ürün Ekle olarak güncellendi -->
-                            <button class="btn btn-success fw-bold py-2 shadow-sm" type="submit"
-                                style="width: 100%; letter-spacing: 0.5px;">
-                                Ürün Ekle
-                            </button>
-                            <label v-if="productMessage"
-                                class="text-danger small mt-1 d-block w-100 text-center fw-medium">{{ productMessage
-                                }}</label>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-
-
-
-        <!--! Başarılı Ürün Kaydı Toast Bildirimi -->
-        <Teleport to="body">
-            <transition name="fade-scale">
-                <div v-if="showSuccessToast" class="admin-toast-overlay">
-                    <div
-                        class="admin-toast-card text-center d-flex flex-column align-items-center justify-content-center">
-                        <!-- Yeşil Daire İçinde Beyaz Tik İkonu -->
-                        <div class="toast-icon-circle mb-3">
-                            <svg xmlns="http://w3.org" width="40" height="40" fill="currentColor"
-                                class="bi bi-check-lg text-white" viewBox="0 0 16 16">
-                                <path
-                                    d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z" />
-                            </svg>
-                        </div>
-                        <!-- Başarı Mesajı -->
-                        <h5 class="fw-bold text-dark m-0" style="font-size: 15px;">Ürün Başarıyla Eklendi</h5>
+                            <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2"
+                                style="font-size: 13px;">
+                                <button type="button"
+                                    class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3"
+                                    @click="closeModal">Vazgeç</button>
+                                <button type="submit" class="btn btn-sm btn-success py-1_5 px-3">Ürünü Kaydet</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </transition>
+            </div>
         </Teleport>
 
-
+        <!-- TOAST BİLDİRİMİ -->
+        <Teleport to="body">
+            <Transition name="toast-fade">
+                <div v-if="showSuccessToast" class="custom-toast-overlay">
+                    <div class="custom-toast-card border border-light-subtle rounded-2 shadow-lg">
+                        <div class="toast-icon-wrapper bg-success text-white rounded-circle">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+                        <h6 class="m-0 text-dark" style="font-size: 14px; font-weight: 500;">Ürün Başarıyla Eklendi</h6>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
-
 </template>
 
-<!--! Programlama ve fonksiyonların olduğu yer -->
 <script>
-
 export default {
+    name: 'AdminProducts',
     data() {
         return {
-            newProduct: [
-                { p_name: "", p_stock: 0, p_price: 0, p_desc: "" }
-
-            ],
+            isModalOpen: false,
+            showSuccessToast: false,
+            // Reaktif form nesnemiz arayüzdeki v-model alanlarıyla birebir eşleşir
+            newProduct: {
+                p_name: "",
+                p_stock: 0,
+                p_price: 0,
+                p_desc: ""
+            },
             products: [],
             productMessage: null,
-            showSuccessToast: false, // İlk açılışta gizli durması için false kilitlendi
             baseUrl: "http://localhost:3001",
-
-            // HATA BURADAYDI: Bu değişkenleri buraya eklemelisiniz
-            imagePreview1: null,
-            imagePreview2: null,
-
-            // Resim dosyalarını tutacağınız değişkenler
-            p_image1: null,
-            p_image2: null,
-            data() {
-            },
-
-
+            imagePreview: null,
+            p_image: null
         };
-
     },
-
     mounted() {
-        this.getProducts()
+        this.getProducts();
     },
-
-    unmounted() {
-
-    },
-
-    watch: {
-
-    },
-
-    computed: {
-
-    },
-
     methods: {
+        openModal() {
+            this.isModalOpen = true;
+            document.body.style.overflow = 'hidden';
+        },
+        closeModal() {
+            this.isModalOpen = false;
+            document.body.style.overflow = '';
+            this.resetForm();
+        },
+        resetForm() {
+            this.newProduct = { p_name: "", p_stock: 0, p_price: 0, p_desc: "" };
+            this.removeImage();
+            this.productMessage = null;
+        },
+        // DÜZELTİLDİ: Tekil dosya binary verisi güvenli şekilde hafızaya alınır
+        handleImageChange(event) {
+            const file = event.target.files[0]; // İlk elemanı alarak binary kilidini açıyoruz
+            if (!file) return;
 
-        // Fotoğraf çekme
-        handleImageChange(event, imageNumber) {
-            const file = event.target.files[0];
-
-            if (!file) {
-                return;
-            }
-
-            if (imageNumber === 1) {
-                this.p_image1 = file;
-                this.imagePreview1 = URL.createObjectURL(file);
-            }
-
-            if (imageNumber === 2) {
-                this.p_image2 = file;
-                this.imagePreview2 = URL.createObjectURL(file);
-            }
-
+            this.p_image = file;
+            this.imagePreview = URL.createObjectURL(file);
         },
 
-        //GET- Ürünleri çektik
-        async getProducts() {
-            try {
-                const id = sessionStorage.getItem("userId");
-                const res = await fetch(`${this.baseUrl}/api/products/${id}`);
-                if (!res.ok) throw new Error("Products endpoint hatası");
-                this.products = await res.json();
-            } catch (e) {
-                console.log(e.message);
-            }
+        removeImage() {
+            this.p_image = null;
+            this.imagePreview = null;
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => input.value = '');
         },
 
-        // POST - Ürün ekleme (Bootstrap Kilitlerini Kaba Kuvvetle Kökten Çözen Metot)
+        // API: Ürün Ekle (POST) - Sütun İsimleriyle Birebir Eşitlendi
         async addProduct() {
             try {
                 const formData = new FormData();
 
-                formData.append("name", this.newProduct.p_name || "");
-                formData.append("stock", this.newProduct.p_stock || 0);
-                formData.append("price", this.newProduct.p_price || 0);
-                formData.append("desc", this.newProduct.p_desc || "");
+                // phpMyAdmin şemanızdaki birebir sütun isimleri
+                formData.append("p_name", this.newProduct.p_name);
+                formData.append("p_stock", this.newProduct.p_stock);
+                formData.append("p_price", this.newProduct.p_price);
+                formData.append("p_desc", this.newProduct.p_desc);
+                formData.append("u_id", sessionStorage.getItem("userId") || "1");
 
-                let userId = sessionStorage.getItem("userId");
-                if (!userId || userId === "undefined" || userId === "null") {
-                    userId = "1";
+                // KRİTİK ALAN: Backend Multer'ın beklediği "p_img1" ile tam eşitlendi!
+                if (this.p_image) {
+                    formData.append("p_img1", this.p_image);
                 }
-                formData.append("userId", userId);
-
-                if (this.p_image1) formData.append("image1", this.p_image1);
-                if (this.p_image2) formData.append("image2", this.p_image2);
 
                 const res = await fetch(`${this.baseUrl}/api/products`, {
                     method: "POST",
-                    body: formData
+                    body: formData // Content-Type belirtmiyoruz, tarayıcı boundary değerini otomatik atar
                 });
 
-                if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({}));
-                    const serverErrorMessage = errorData.error || "Bilinmeyen sunucu hatası";
-                    throw new Error(`Sunucu Hatası: ${serverErrorMessage}`);
-                }
+                if (!res.ok) throw new Error("Sunucu ürünü veritabanına ekleyemedi.");
 
-                const data = await res.json();
-
-                // ========================================================
-                // KABA KUVVET (MANUEL) MODAL KAPATMA VE TOAST AKIŞI
-                // ========================================================
-
-                // 1. Modalı görünmez yapmak için Bootstrap'in 'show' sınıfını elinden alıyoruz
-                const modalElement = document.getElementById('addproduct');
-                if (modalElement) {
-                    modalElement.classList.remove('show');
-                    modalElement.style.display = 'none';
-                    modalElement.setAttribute('aria-hidden', 'true');
-                }
-
-                // 2. Ekranın kilitli kalmasını engellemek için body etiketindeki Bootstrap kilitlerini siliyoruz
-                document.body.classList.remove('modal-open');
+                // Başarılı Kapatma ve Toast Akışı
+                this.isModalOpen = false;
                 document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-
-                // 3. Arkadaki o yapışkan siyah perdeyi (gölgeliği) sayfadan tamamen söküp atıyoruz
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-
-                // 4. Ekranın tam ortasındaki yeşil tikli kare kutuyu (Toast) açıyoruz
                 this.showSuccessToast = true;
 
-                // 5. Form alanlarını temizliyoruz ve ürün listesini anında yeniliyoruz
-                this.getProducts();
-                this.newProduct = [
-                    { p_name: "", p_stock: 1, p_price: 0, p_desc: "" }
-                ];
-                this.imagePreview1 = null;
-                this.imagePreview2 = null;
-                this.p_image1 = null;
-                this.p_image2 = null;
-
-                // 6. Tam 3 saniye sonra yeşil kare kutuyu otomatik olarak kapatıyoruz
                 setTimeout(() => {
                     this.showSuccessToast = false;
+                    this.resetForm();
+                    this.getProducts(); // Tabloyu yeniler
                 }, 3000);
 
-                // ========================================================
-
+            } catch (error) {
+                console.error("Ekleme Hatası:", error.message);
+                alert("Ürün eklenirken bir hata oluştu: " + error.message);
             }
-            catch (error) {
-                console.error("Ürün ekleme hatası:", error.message);
+        },
+
+        // API: Ürünleri Listele (GET)
+        async getProducts() {
+            try {
+                // Tablonuzdaki u_id ilişkisi için session hafızasındaki ID'yi okuyoruz
+                const id = sessionStorage.getItem("userId") || "1";
+                const res = await fetch(`${this.baseUrl}/api/products/${id}`);
+                if (!res.ok) throw new Error("Ürünler listesi çekilemedi.");
+                this.products = await res.json();
+            } catch (e) {
+                console.error("GET Hatası:", e.message);
+            }
+        },
+        // API: Ürün Güncelle (PUT) - YENİ SQL ŞEMASINA GÖRE DÜZENLENDİ
+        async updateProduct(p_id, p_name, p_stock, p_price, p_desc) {
+            try {
+                const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        p_name: p_name,
+                        p_stock: Number(p_stock),
+                        p_price: Number(p_price),
+                        p_desc: p_desc
+                    })
+                });
+                if (!res.ok) throw new Error("Güncelleme başarısız.");
+                alert("Ürün başarıyla güncellendi.");
+                this.getProducts();
+            } catch (error) {
+                console.error("Güncelleme Hatası:", error.message);
                 alert("Hata: " + error.message);
             }
         },
-
-
-        //PUT - Ürün güncelle 
-        async updateProduct(p_id, p_name, p_stock, p_price, p_desc) {
-
-            try {
-                const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, { //istekte bulunduğumuz yer.
-                    method: "PUT", //PUT isteğinde buluyoruz.
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ //istekle beraber neleri yolluyorsun?
-                        name: p_name,
-                        stock: p_stock,
-                        price: p_price,
-                        desc: p_desc,
-                    })
-                });
-                if (!res.ok) {
-                    if (res.status == 400) throw new Error("Hatalı veri");
-                }
-
-                const data = await res.json();
-                if (data) alert("Ürün güncellendi.")
-                this.getProducts(); //Güncelle işleminden sonra tekrardan verileri çek.
-            }
-            catch (error) {
-                console.log(error.message);
-            }
-        },
-
-        //DELETE - Ürün sil 
+        // API: Ürün Sil (DELETE)
         async deleteProduct(p_id) {
+            if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
             try {
-                const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, { //istekte bulunduğumuz yer.
-                    method: "DELETE", //PUT isteğinde buluyoruz.
-                    headers: {
-                        "Content-Type": "application/json",
-                    }
+                const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, {
+                    method: "DELETE"
                 });
-                if (!res.ok) throw new Error(res.error);
-                const data = await res.json();
-                if (data) alert("Ürün silindi.")
-                this.getProducts(); //Güncelle işleminden sonra tekrardan verileri çek.
-            }
-            catch (error) {
-                console.log(error);
+                if (!res.ok) throw new Error("Silme işlemi başarısız.");
+                alert("Ürün silindi.");
+                this.getProducts();
+            } catch (error) {
+                console.error("Silme Hatası:", error.message);
             }
         }
-
     }
 };
-
 </script>
 
+
 <style scoped>
-/* Arka planı hafif buzlayan şeffaf perde katmanı */
-.admin-toast-overlay {
+.custom-modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 99999 !important;
-    /* Modal ve navbar dahil her şeyin en üstüne çıkmasını sağlar */
+    justify-content: center;
+    z-index: 100000 !important;
 }
 
-/* İstediğiniz Tam Kare Başarı Bildirim Kartı */
-.admin-toast-card {
-    background-color: #ffffff;
-    width: 220px;
-    height: 220px;
-    border-radius: 16px;
-    /* Modern yumuşatılmış kare köşeler */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    padding: 20px;
+.custom-modal-dialog {
+    width: 100%;
+    max-width: 500px;
+    margin: 1.75rem;
 }
 
-/* Yeşil İkon Yuvarlağı */
-.toast-icon-circle {
-    width: 70px;
-    height: 70px;
-    background-color: #198754;
-    /* Bootstrap Success Yeşili */
-    border-radius: 50%;
+.custom-modal-content {
+    background: #ffffff;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+}
+
+.form-control:focus {
+    border-color: #198754 !important;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
+}
+
+.custom-toast-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(1px);
+    display: flex;
     align-items: center;
-    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.25);
+    justify-content: center;
+    z-index: 100100 !important;
 }
 
-/* Vue Fade-Scale Geçiş Animasyonları */
-.fade-scale-enter-active,
-.fade-scale-leave-active {
-    transition: opacity 0.25s ease, transform 0.25s ease;
+.custom-toast-card {
+    background: #ffffff;
+    padding: 20px 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
-.fade-scale-enter-from,
-.fade-scale-leave-to {
+.toast-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+    transition: all 0.25s ease;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
     opacity: 0;
-    transform: scale(0.85);
-    /* Açılırken ve kapanırken büyüme/küçülme hissiyatı verir */
+    transform: scale(0.92);
 }
 </style>
