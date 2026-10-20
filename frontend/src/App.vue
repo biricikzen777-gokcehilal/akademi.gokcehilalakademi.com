@@ -10,58 +10,49 @@ import { ref } from 'vue';
 </script>
 
 <template>
+ <!-- ANA NAVBAR SARMALAYICISI (Alttan ve üstten tam 10px boşluk kilitlendi) -->
+<div class="w-100 main-nav-container shadow-sm" style="padding-top: 13px; padding-bottom: 13px;">
+    <div class="container-fluid px-custom">
+        <nav class="navbar navbar-expand-lg bg-white p-0">
+            <div class="container-fluid p-0">
 
-    <!-- ! NAVBAR -->
-    <div class="w-100 shadow-sm" style="background-color: white;">
-
-        <!-- 
-      İçerik sınırlandırmalarını kaldırıp sağdan-soldan tam 40px boşluk bırakmak için 
-      style="padding-left: 40px; padding-right: 40px;" eklendi.
-    -->
-        <div class="container-fluid" style="padding-left: 7%; padding-right: 7%; padding-top: 5px;padding-bottom: 5px;">
-            <!--! Navbar -->
-            <nav class="navbar navbar-expand-lg" style="background-color: white">
-                <div class="container-fluid p-0">
-                    <a class="navbar-brand" href="index.html">
-                        <img width="160px" src="/src/assets/img/logo.jpg" alt="LOGO">
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                     <!-- LOGO ALANI -->
+                    <RouterLink class="navbar-brand py-0" to="/">
+                        <img width="145px" src="/src/assets/img/logo.jpg" alt="Gökçe Hilal Akademi LOGO" class="nav-logo">
+                    </RouterLink>
+                    
+                    <!-- MOBIL MENÜ BUTONU -->
+                    <button class="navbar-toggler border-0 shadow-none p-1" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                        aria-expanded="false" aria-label="Menüyü Aç/Kapat">
                         <span class="navbar-toggler-icon"></span>
                     </button>
+                    
+                    <!-- MENÜ VE ARAMA ALANI -->
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0 shadow-none">
+                        <!-- Menü Bağlantı Linkleri -->
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center custom-nav-links">
                             <li class="nav-item">
-                                <RouterLink class="navlink" style="color: black; font-weight: 400; font-size: 18px;"
-                                    to="/">
-                                    Anasayfa</RouterLink>
+                                <RouterLink class="nav-link-item" to="/">Anasayfa</RouterLink>
                             </li>
                             <li class="nav-item">
-                                <RouterLink class="navlink" style="color: black; font-weight: 400; font-size: 18px;"
-                                    to="/about">
-                                    Hakkımda</RouterLink>
+                                <RouterLink class="nav-link-item" to="/about">Hakkımda</RouterLink>
                             </li>
                             <li class="nav-item">
-                                <RouterLink class="navlink" style="color: black; font-weight: 400; font-size: 18px;"
-                                    to="/faq">
-                                    S.S.S.</RouterLink>
+                                <RouterLink class="nav-link-item" to="/faq">S.S.S.</RouterLink>
                             </li>
                             <li class="nav-item">
-                                <RouterLink class="navlink" style="color: black; font-weight: 400; font-size: 18px;"
-                                    to="/product">
-                                    Ürünler</RouterLink>
+                                <RouterLink class="nav-link-item" to="/product">Ürünler</RouterLink>
                             </li>
                             <li class="nav-item">
-                                <RouterLink class="navlink" style="color: black; font-weight: 400; font-size: 18px;"
-                                    to="/contact">
-                                    İletişim</RouterLink>
+                                <RouterLink class="nav-link-item" to="/contact">İletişim</RouterLink>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="navlink" style="cursor: pointer;" @click="pageRouter()">
-                                    <svg xmlns="http://w3.org" width="26" height="26" fill="black"
-                                        class="bi bi-person-circle" viewBox="0 0 18 18">
+                            <!-- Profil / Giriş İkonu -->
+                            <li class="nav-item ms-lg-2">
+                                <a class="nav-profile-icon" @click="pageRouter()" role="button" title="Profilim">
+                                    <svg xmlns="http://w3.org" width="22" height="22" fill="currentColor"
+                                        class="bi bi-person-circle" viewBox="0 0 16 16">
                                         <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
                                         <path fill-rule="evenodd"
                                             d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
@@ -70,14 +61,12 @@ import { ref } from 'vue';
                             </li>
                         </ul>
 
-                        <!--! Arama Formu -->
-                        <form class="d-flex" @submit.prevent="search">
+                        <!-- Minimalist Arama Formu -->
+                        <form class="d-flex align-items-center search-form-wrapper" @submit.prevent="search">
                             <input @keyup.enter="search" v-model="nav_search"
-                                class="form-control me-2 shadow-none search-input" type="search"
-                                placeholder="Ürün adı, koku veya taş arayın..." aria-label="Search" />
-                            <button @click="search" class="btn fw-semibold px-4 search-button"
-                                style="color: green; border-color: green; background-color: transparent; transition: all 0.2s ease-in-out;"
-                                type="button">
+                                class="form-control shadow-none custom-search-input" type="search"
+                                placeholder="Ürün adı, koku veya taş arayın..." aria-label="Arama Terimi" />
+                            <button @click="search" class="btn custom-search-button ms-2" type="button">
                                 Ara
                             </button>
                         </form>
@@ -764,6 +753,110 @@ export default {
 <!--! scoped yazmazsak buradaki cssler her sayfada geçerli olur -->
 
 <style scoped>
+/* ==========================================================================
+   1. GENEL DÜZEN VE ÇEVRESEL BOŞLUKLAR (7% Esneklik Korundu)
+   ========================================================================== */
+.main-nav-container {
+    background-color: #ffffff;
+    position: relative;
+    z-index: 1040;
+}
+.px-custom {
+    padding-left: 7% !important;
+    padding-right: 7% !important;
+}
+
+.nav-logo {
+    transition: transform 0.2s ease;
+}
+.nav-logo:hover {
+    transform: scale(1.02);
+}
+
+/* ==========================================================================
+   2. YENİLENEN BÜYÜK MENÜ BAĞLANTILARI VE DİNAMİK KALINLAŞMA MOTORU
+   ========================================================================== */
+.custom-nav-links {
+    gap: 18px; /* Linkler arası dengeli ve ferah boşluk */
+    padding-left: 15px;
+}
+
+.nav-link-item {
+    font-size: 16px !important; /* İstediğiniz gibi yazı boyutu büyütüldü */
+    font-weight: 400 !important; /* Başlangıç font ağırlığı fw-medium (500) yapıldı */
+    color: #2b2b2b !important;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    padding: 6px 6px;
+    display: inline-block;
+    transition: color 0.2s ease-in-out, font-weight 0.2s ease-in-out;
+}
+
+/* DÜZELTİLDİ: Mouse ile üzerine gelindiğinde veya aktifken font-weight artar (600) ve yeşil olur */
+.nav-link-item:hover,
+.router-link-active.nav-link-item {
+    color: #008000 !important; 
+    font-weight: 500 !important; /* fw-semibold / bold seviyesine yumuşak geçiş */
+}
+
+/* Profil İkonu Tasarımı */
+.nav-profile-icon {
+    color: #2b2b2b;
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.nav-profile-icon:hover {
+    color: #008000;
+    transform: scale(1.05);
+}
+
+/* ==========================================================================
+   3. MİNİMALİST ARAMA KUTUSU VE BUTONU
+   ========================================================================== */
+.search-form-wrapper {
+    max-width: 320px;
+    width: 100%;
+}
+
+.custom-search-input {
+    font-size: 14px;
+    height: 36px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    color: #2b2b2b;
+    padding-left: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-search-input:focus {
+    border-color: #008000 !important;
+    box-shadow: 0 0 0 0.15rem rgba(0, 128, 0, 0.1) !important;
+}
+
+.custom-search-button {
+    font-size: 14px;
+    font-weight: 500;
+    height: 36px;
+    padding: 0 20px;
+    color: #008000;
+    border: 1px solid #008000;
+    background-color: transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.custom-search-button:hover {
+    color: #ffffff;
+    background-color: #008000;
+    box-shadow: 0 4px 10px rgba(0, 128, 0, 0.15);
+}
+
+
 .sepetsidebar {
     position: fixed;
     right: 20px;
