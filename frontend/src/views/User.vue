@@ -164,18 +164,22 @@ export default {
             }
         };
     },
-    mounted() {
-        const navbar = document.querySelector('nav');
+      mounted() {
+        // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp kullanıcı panelinde tamamen gizliyoruz
+        const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        if (navbar) navbar.style.display = 'none';
+        
+        if (mainNavbar) mainNavbar.style.display = 'none';
         if (footer) footer.style.display = 'none';
         
         this.checkAdminSession();
     },
     unmounted() {
-        const navbar = document.querySelector('nav');
+        // YENİLENDİ: Kullanıcı panelinden çıkıldığında navbar ve footer otomatik olarak geri gelir
+        const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        if (navbar) navbar.style.display = '';
+        
+        if (mainNavbar) mainNavbar.style.display = '';
         if (footer) footer.style.display = '';
     },
     methods: {
@@ -210,6 +214,9 @@ export default {
         logout() {
             sessionStorage.clear();
             this.$router.push("/");
+            // Yedek Güvenlik: Çıkış yapıldığında ana siteye dönerken navbarın anında görünmesini garanti eder
+            const mainNavbar = document.querySelector('.main-nav-container');
+            if (mainNavbar) mainNavbar.style.display = '';
         }
     }
 };

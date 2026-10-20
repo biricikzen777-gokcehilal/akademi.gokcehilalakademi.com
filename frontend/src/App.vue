@@ -10,11 +10,13 @@ import { ref } from 'vue';
 </script>
 
 <template>
- <!-- ANA NAVBAR SARMALAYICISI (Alttan ve üstten tam 10px boşluk kilitlendi) -->
+
+<!-- ANA NAVBAR SARMALAYICISI (Alttan ve üstten tam 13px boşluk kilitlendi) -->
 <div class="w-100 main-nav-container shadow-sm" style="padding-top: 13px; padding-bottom: 13px;">
     <div class="container-fluid px-custom">
         <nav class="navbar navbar-expand-lg bg-white p-0">
             <div class="container-fluid p-0">
+
 
                      <!-- LOGO ALANI -->
                     <RouterLink class="navbar-brand py-0" to="/">

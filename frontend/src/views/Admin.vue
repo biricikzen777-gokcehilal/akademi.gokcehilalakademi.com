@@ -145,19 +145,22 @@ export default {
                 transition: 'all 0.2s ease'
             }
         };
-    },
-    mounted() {
-        const navbar = document.querySelector('nav');
+    },    mounted() {
+        // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp tamamen gizliyoruz
+        const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        if (navbar) navbar.style.display = 'none';
+        
+        if (mainNavbar) mainNavbar.style.display = 'none';
         if (footer) footer.style.display = 'none';
         
         this.checkAdminSession();
     },
     unmounted() {
-        const navbar = document.querySelector('nav');
+        // YENİLENDİ: Admin panelinden çıkıldığında (Anasayfa, Ürünler vb. geçildiğinde) navbar ve footer geri gelir
+        const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        if (navbar) navbar.style.display = '';
+        
+        if (mainNavbar) mainNavbar.style.display = '';
         if (footer) footer.style.display = '';
     },
     methods: {
@@ -192,9 +195,13 @@ export default {
         logout() {
             sessionStorage.clear();
             this.$router.push("/");
+            // Yedek Güvenlik: Çıkış yapıldığında navbarın anında görünür olmasını garanti eder
+            const mainNavbar = document.querySelector('.main-nav-container');
+            if (mainNavbar) mainNavbar.style.display = '';
         }
     }
 };
+
 </script>
 
 <style scoped>
