@@ -53,7 +53,7 @@
                     <button @click="state = 'orders'"
                         class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                         style="width: 80%;" :style="[state === 'orders' ? activeStyle : passiveStyle]">
-                        <i class="bi bi-bag-check me-2"></i> Siparişler
+                        <i class="bi bi-bag-check me-2"></i> Siparişlerim
                     </button>
                 </div>
             </div>
