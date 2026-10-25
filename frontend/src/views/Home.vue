@@ -91,6 +91,26 @@
 
         </div>
 
+               <!-- ==========================================================================
+           3. BÖLÜM: MARKA DEĞERİ BİLDİRİM ALANI
+           ========================================================================== -->
+        <div class="row justify-content-center text-center grid-row mt-4">
+            <div class="col-12 col-md-10 d-flex flex-column align-items-center">
+                <!-- Marka Değeri Başlığı (Koyu Pembe Tonu ve Ortalanmış Alt Çizgi Düzeni) -->
+                <div class="title-wrapper d-flex flex-column align-items-center mb-3">
+                    <h2 class="shop-main-title fw-semibold">MARKA DEĞERİ</h2>
+                    <div class="brand-title-line"></div>
+                </div>
+                
+                <!-- İçerik Metni (Birebir Aynı Tutuldu) -->
+                <p class="brand-text m-0 px-lg-5">
+                    Ruhsal Şifa İlmi markalaşma süreci 5 Ağustos 2022 tarihinde başlatıldı ve 23 Aralık 2022 tarihinde tamamlandı. 5 Ağustos 2022 tarihinden itibaren yayımlanan tüm içeriklerin ve uygulanan çalışmaların isim, telif, kullanım, yayım-basım, eğitim, seminer, sempozyum düzenleme, medya…vb tüm yasal hakları Gökçe Hilal’e aittir. İhlali durumunda yasal işlem başlatılır.
+                </p>
+            </div>
+        </div>
+
+
+
     </div>
 </template>
 <script setup>
@@ -98,6 +118,41 @@
 </script>
 
 <style scoped>
+
+/* ==========================================================================
+   3. MARKA DEĞERİ BİLDİRİM ALANI STİLLERİ (BÜYÜTÜLMÜŞ & KOYU)
+   ========================================================================== */
+.shop-main-title {
+    color: #C71585 !important; /* Diğer sayfalarla tam uyumlu asil KOYU PEMBE tonu */
+    font-size: 26px !important; /* Misyon/Vizyon ile dengeli büyük vitrin puntosu */
+    letter-spacing: 0.5px;
+    margin: 0 !important;
+}
+
+/* Başlığın altına çekilen, diğer bölümlerle birebir uyumlu alt çizgi süsü */
+.brand-title-line {
+    width: 45px;
+    height: 2px;
+    background-color: #C71585; /* Kurumsal yeşil tonlama */
+    margin-top: 6px;
+    margin-bottom: 10px;
+    opacity: 0.6;
+    transition: width 0.3s ease;
+}
+.grid-row:hover .brand-title-line {
+    width: 120px; /* Fareyle üzerine gelindiğinde çizgi zarifçe dikey simetriyi genişletir */
+}
+
+/* İstediğiniz gibi büyütülen, netleştirilen ve koyulaştırılan içerik metni */
+.brand-text {
+    font-size: 16px; /* Okunması kolay büyük punto */
+    font-weight: 400; /* Belirgin font ağırlığı */
+    color: #2b2b2b; /* Gözü yormayan net koyu yazı rengi */
+    line-height: 1.65; /* Ferah dikey satır yayılımı */
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
 /* ==========================================================================
    1. DIŞ ALAN VE CAROUSEL DIŞ ÇERÇEVELERİ
    ========================================================================== */
@@ -209,4 +264,5 @@
     transform: scale(1.015);
     box-shadow: 0 18px 35px rgba(0, 0, 0, 0.09);
 }
+
 </style>
