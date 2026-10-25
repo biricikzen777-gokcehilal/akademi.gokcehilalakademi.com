@@ -15,44 +15,24 @@
             <!-- 1. BLOK: İLK 3 PARAGRAF VE ABOUT1 GÖRSELİ -->
             <div class="row justify-content-center align-items-center grid-row">
                 <div class="col-12 col-md-5 text-center mb-4 mb-md-0 position-relative image-hover-zoom">
-                    <img src="../assets/img/about1.jpg" class="img-fluid rounded-3 section-img" alt="Gökçe Hilal Akademi Hakkımda 1">
+                    <img src="../assets/img/about1.webp" class="img-fluid rounded-3 section-img" alt="Gökçe Hilal Akademi Hakkımda 1">
                 </div>
                 <div class="col-12 col-md-6 ps-md-5">
                     <div class="about-text-wrapper text-start">
                         <p class="about-paragraph">Manisa’nın küçük bir ilçesinde doğan Gökçe Hilal, ilkokuldan itibaren tüm eğitim-öğretim hayatını devlet okullarında ve devlet yurtlarında geçirdi.</p>
                         <p class="about-paragraph">Üniversite eğitimlerini; Dokuz Eylül Üniversitesi, İlköğretim Matematik Öğretmenliği (2010), Çekya Masaryk University, Matematik ve Çek Kültürü (2009 Güz), Celal Bayar Üniversitesi, Moda Tasarım ve Stilistlik (2015) üzerine tamamladı.</p>
                         <p class="about-paragraph">2020 yılı itibariyle yaşadığı bir dizi ruhsal ve metafizik deneyim sonucu, ruhsal uyanışı tetiklendi. Bu tetiklenme sonrası 2 yıl boyunca biyoenerji, energy teknikleri ve kişisel gelişim üzerine birçok eğitim aldı ve yüzlerce enerji seansı uyguladı.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. BLOK: SONRAKİ 2 PARAGRAF VE ABOUT2 GÖRSELİ (METİN SOLDA - GÖRSEL SAĞDA) -->
-            <div class="row justify-content-center align-items-center grid-row">
-                <div class="col-12 col-md-6 pe-md-5 order-2 order-md-1">
-                    <div class="about-text-wrapper text-start text-md-end d-flex flex-column align-items-md-end">
                         <p class="about-paragraph">31 Aralık 2022 tarihinde Konya Mevlana Türbesinde gerçekleşen bir aktivasyon ile kendisine Ruhsal Şifa İlmi ve “Ruhsal Şifacılık, Ruhların Uyanışı ve Aydınlanması” misyonu verildi. Üstlendiği misyon sonrası; kendini ruhsal yolculuğunu tamamlamaya ve Ruhsal Şifa İlmi ile ruhlara profesyonel olarak katkı olmaya adadı.</p>
                         <p class="about-paragraph">Ruhsal Şifa İlmi sonrası, Milli Eğitim bakanlığı bünyesinde 11 yıldır yapmakta olduğu öğretmenlik mesleğinden çekildi ve Gökçe Hilal ile Ruhsal Şifa Akademi’yi kurdu.</p>
-                    </div>
-                </div>
-                <div class="col-12 col-md-5 text-center mb-4 mb-md-0 position-relative image-hover-zoom order-1 order-md-2">
-                    <img src="../assets/img/about2.jpg" class="img-fluid rounded-3 section-img" alt="Gökçe Hilal Akademi Hakkımda 2">
-                </div>
-            </div>
-
-            <!-- 3. BLOK: YOLCULUK SON PARAGRAFLARI VE ABOUT3 GÖRSELİ -->
-            <div class="row justify-content-center align-items-center grid-row">
-                <div class="col-12 col-md-5 text-center mb-4 mb-md-0 position-relative image-hover-zoom">
-                    <img src="../assets/img/about3.jpg" class="img-fluid rounded-3 section-img" alt="Gökçe Hilal Akademi Hakkımda 3">
-                </div>
-                <div class="col-12 col-md-6 ps-md-5">
-                    <div class="about-text-wrapper text-start">
                         <p class="about-paragraph">2023 yılıyla birlikte, Hızır rehberliğinde Hakikat yolculuğuna çıktı. Hakikat yolculuğu sebebiyle, ruhsal alemde dört büyük Orta Doğu dininin öğretisinde bulundu, birçok evliyadan ve peygamberden eğitimler aldı. Bu süreçlerde dinlerin ruhsal alemdeki yapılanması ve işleyişi üzerine tecrübeler ve farkındalıklar kazandı. Yaşadığı deneyimler sebebiyle sürecin sonunda; hiçbir dini öğreti içinde yer almama ve dini öğretilere hizmet etmeme kararı aldı. Bu yüzden, artık yolculuğuna yalnız devam etmekte ve kendi yolunu yürümektedir.</p>
                         <p class="about-paragraph">Gökçe Hilal, hakikat ile yüzleştiği 26 Mart 2025 Mart itibariyle yaşadıkları, gördükleri ve misyonu gereği; sadece Hakikate ve Ruhsal Uyanışa hizmet etmektedir.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. BÖLÜM: EĞİTİMLER ALANI (Yumuşak Pembe/Yeşil Arka Planlı Özel Kart) -->
+          
+
+            <!-- 2. BÖLÜM: EĞİTİMLER ALANI (Yumuşak Pembe/Yeşil Arka Planlı Özel Kart) -->
             <div class="row justify-content-center mt-5">
                 <div class="col-12 col-md-11">
                     <div class="custom-education-card border border-light-subtle rounded-3 shadow-sm p-4 bg-white">

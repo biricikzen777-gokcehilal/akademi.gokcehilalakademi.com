@@ -42,43 +42,36 @@ function slugifyFolderName(text) {
     Object.keys(maps).forEach(key => {
         slug = slug.replaceAll(key, maps[key]);
     });
-    // Boşlukları ve özel karakterleri tamamen temizleyip birleştirir
     return slug.replace(/[^a-z0-9]/g, ''); 
 }
 
 // ==========================================
-// 2. DİNAMİK KLASÖR AÇAN VE İSİMLENDİREN MULTER MOTORU
+// 2. 3 RESMİ AYRI AYRI YAKALAYAN VE KLASÖRLEYEN MULTER MOTORU
 // ==========================================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // Form verilerinden gelen ürün adını yakalıyoruz, gelmediyse varsayılan bir isim veriyoruz
         const productName = req.body.p_name || "adsiz-urun";
         const folderName = slugifyFolderName(productName);
         const targetPath = path.join(__dirname, "uploads", folderName);
 
-        // İstediğiniz ürün isimli klasör yoksa anında otomatik olarak oluşturulur
         if (!fs.existsSync(targetPath)) {
             fs.mkdirSync(targetPath, { recursive: true });
         }
         cb(null, targetPath);
     },
     filename: (req, file, cb) => {
-        // İstekte kaçıncı dosyanın işlendiğini bulup img1, img2, img3 olarak kilitliyoruz
-        if (!req.fileIndexCounter) {
-            req.fileIndexCounter = 1;
-        } else {
-            req.fileIndexCounter++;
-        }
+        const ext = path.extname(file.originalname);
+        let fieldNumber = "1";
+        if (file.fieldname === "p_img2") fieldNumber = "2";
+        if (file.fieldname === "p_img3") fieldNumber = "3";
         
-        const ext = path.extname(file.originalname); // .jpg, .png vb. uzantıyı korur
-        const newFileName = `img${req.fileIndexCounter}${ext}`;
-        cb(null, newFileName);
+        cb(null, `img${fieldNumber}${ext}`);
     }
 });
 const upload = multer({ storage: storage });
 
 // ==========================================
-// 3. ADMİN PANELİ GÜVENLİ ÜRÜN EKLEME ROTASI
+// 3. ÜRÜN YÖNETİMİ (PRODUCTS) API ROTACILARI
 // ==========================================
 
 //? GET products - Ürünleri Listele
@@ -93,40 +86,7 @@ app.get("/api/products/:userId", (req, res) => {
     });
 });
 
-/// ==========================================================================
-// 1. 3 RESMİ AYRI AYRI YAKALAYAN VE KLASÖRLEYEN MULTER MOTORU
-// ==========================================================================
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // Yardımcı küçük harfe çevirme mimarisi
-        const maps = { 'ç': 'c', 'Ç': 'c', 'ğ': 'g', 'Ğ': 'g', 'ı': 'i', 'I': 'i', 'İ': 'i', 'ö': 'o', 'Ö': 'o', 'ş': 's', 'Ş': 's', 'ü': 'u', 'Ü': 'u' };
-        let folderName = (req.body.p_name || "adsiz-urun").toString().toLowerCase();
-        Object.keys(maps).forEach(key => { folderName = folderName.replaceAll(key, maps[key]); });
-        folderName = folderName.replace(/[^a-z0-9]/g, '');
-
-        const targetPath = path.join(__dirname, "uploads", folderName);
-
-        // Klasör yoksa anında otomatik olarak diskte oluşturulur
-        if (!fs.existsSync(targetPath)) {
-            fs.mkdirSync(targetPath, { recursive: true });
-        }
-        cb(null, targetPath);
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        // Frontend'den gelen p_img1, p_img2, p_img3 alan isimlerine göre resimleri img1, img2, img3 yapar
-        let fieldNumber = "1";
-        if (file.fieldname === "p_img2") fieldNumber = "2";
-        if (file.fieldname === "p_img3") fieldNumber = "3";
-        
-        cb(null, `img${fieldNumber}${ext}`);
-    }
-});
-const upload = multer({ storage: storage });
-
-// ==========================================================================
-// 2. 3 RESİMLİ VE 3 SÜTUNLU YENİ ÜRÜN EKLEME POST ROTANIZ (SQL GÜVENLİ SÜRÜM)
-// ==========================================================================
+//? POST - 3 Resimli Ve 3 Sütunlu Güvenli Ürün Ekleme
 app.post("/api/addProductSecure", upload.fields([
     { name: 'p_img1', maxCount: 1 },
     { name: 'p_img2', maxCount: 1 },
@@ -139,25 +99,18 @@ app.post("/api/addProductSecure", upload.fields([
             return res.status(400).json("Gerekli alanlar eksik geldi.");
         }
 
-        // Klasör ismini url yolları için tekrar sadeleştiriyoruz
-        const maps = { 'ç': 'c', 'Ç': 'c', 'ğ': 'g', 'Ğ': 'g', 'ı': 'i', 'I': 'i', 'İ': 'i', 'ö': 'o', 'Ö': 'o', 'ş': 's', 'Ş': 's', 'ü': 'u', 'Ü': 'u' };
-        let folderName = p_name.toString().toLowerCase();
-        Object.keys(maps).forEach(key => { folderName = folderName.replaceAll(key, maps[key]); });
-        folderName = folderName.replace(/[^a-z0-9]/g, '');
+        const folderName = slugifyFolderName(p_name);
 
-        // phpMyAdmin'deki 3 bağımsız sütun için yüklenen dosyaların yolları hazırlanır
         const img1_path = req.files && req.files['p_img1'] ? `/uploads/${folderName}/${req.files['p_img1'][0].filename}` : "";
         const img2_path = req.files && req.files['p_img2'] ? `/uploads/${folderName}/${req.files['p_img2'][0].filename}` : "";
         const img3_path = req.files && req.files['p_img3'] ? `/uploads/${folderName}/${req.files['p_img3'][0].filename}` : "";
 
-        // phpMyAdmin'deki 3 resimli güncel veritabanı şemanızla %100 uyumlu sorgu
         const query = `
             INSERT INTO products 
             (u_id, p_img1, p_img2, p_img3, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        // KRİTİK DÜZELTME: DECIMAL(10,2) alanları için fiyat verisi float sayısına zorlanıyor, stock integer yapılıyor
         const formattedPrice = parseFloat(p_price) || 0.00;
         const formattedStock = parseInt(p_stock) || 0;
 
@@ -169,14 +122,13 @@ app.post("/api/addProductSecure", upload.fields([
             p_name,
             formattedStock,
             formattedPrice,
-            formattedPrice, // p_price_disc sütunu için varsayılan indirimli fiyat
-            1,              // p_active sütunu için varsayılan aktif (1) durumu
+            formattedPrice, 
+            1,              
             p_desc || ""
         ];
 
         db.query(query, values, (err, result) => {
             if (err) {
-                // SQL tarafında bir takılma olursa terminal ekranına hatanın tam ismini basar
                 console.error("❌ MySQL INSERT Hatası Detayı:", err.message);
                 return res.status(500).json("Sunucu ürünü veritabanına ekleyemedi.");
             }
@@ -189,7 +141,7 @@ app.post("/api/addProductSecure", upload.fields([
     }
 });
 
-//? PUT - Ürün Güncelle (SQL ŞEMASINA VE VERİ TİPLERİNE TAM UYUMLU)
+//? PUT - Ürün Güncelle
 app.put("/api/products/:id", (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -199,11 +151,9 @@ app.put("/api/products/:id", (req, res) => {
             return res.status(400).json("Hatalı veri geldi veya zorunlu alanlar boş.");
         }
 
-        // KRİTİK ADIM: DECIMAL ve INT alanları için güvenli sayısal dönüşümler zorlanıyor
         const formattedPrice = parseFloat(p_price) || 0.00;
         const formattedStock = parseInt(p_stock) || 0;
 
-        // phpMyAdmin şemanızdaki birebir sütun isimleri ve birincil anahtarınız (p_id) kilitlendi
         const query = `
             UPDATE products 
             SET p_name = ?, p_stock = ?, p_price = ?, p_price_disc = ?, p_desc = ? 
@@ -214,7 +164,7 @@ app.put("/api/products/:id", (req, res) => {
             p_name.trim(),
             formattedStock,
             formattedPrice,
-            formattedPrice, // İndirimli fiyat alanının da güncellenmesi için
+            formattedPrice, 
             p_desc || "",
             id
         ];
@@ -224,11 +174,9 @@ app.put("/api/products/:id", (req, res) => {
                 console.error("❌ MySQL UPDATE Hatası Detayı:", err.message);
                 return res.status(500).json("Güncelleme başarısız.");
             }
-            
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: "Güncellenecek ürün bulunamadı." });
             }
-
             res.status(200).json({ message: "Ürün başarıyla güncellendi." });
         });
     } catch (e) {
@@ -237,8 +185,7 @@ app.put("/api/products/:id", (req, res) => {
     }
 });
 
-
-//? DELETE - Ürün Sil (Eksik kalan rotanız tamamlandı)
+//? DELETE - Ürün Sil
 app.delete("/api/products/:id", (req, res) => {
     const id = Number(req.params.id);
     const query = "DELETE FROM products WHERE p_id = ?";
@@ -363,7 +310,6 @@ app.delete("/api/users/:id", (req, res) => {
 
 //? GET - Tüm iletişim mesajlarını listele
 app.get("/api/messages", (req, res) => {
-    // phpMyAdmin'deki mevcut sütun adlarına göre sorgu güncellendi
     const query = "SELECT m_id, m_firstName, m_lastName, m_email, m_phone, m_subject, m_message, m_created_at FROM messages ORDER BY m_id DESC";
     db.query(query, (err, results) => {
         if (err) {
@@ -383,10 +329,8 @@ app.post("/api/messages", (req, res) => {
             return res.status(400).json("Gerekli alanlar eksik geldi.");
         }
 
-        // Ülke kodu ve telefon numarasını tablonuzdaki tek bir alan olan m_phone'a birleştirerek yazıyoruz
         const combinedPhone = code ? `${code} ${tel}` : tel;
 
-        // Tablonuzda bulunan tam sütun listesi: m_firstName, m_lastName, m_email, m_phone, m_subject, m_message
         const query = `
             INSERT INTO messages 
             (m_firstName, m_lastName, m_email, m_phone, m_subject, m_message) 
@@ -405,7 +349,8 @@ app.post("/api/messages", (req, res) => {
         db.query(query, values, (err, result) => {
             if (err) {
                 console.error("❌ MySQL INSERT Message Hatası Detayı:", err.message);
-                return res.status(500).json("Sunucu ürünü veritabanına ekleyemedi.");
+                // Detaylı hatayı terminalde görebilmek için mutlaka buraya log ekledik
+                return res.status(500).json({ error: err.message });
             }
             res.status(201).json("Mesaj başarıyla iletildi.");
         });
@@ -460,17 +405,10 @@ app.put("/api/messages/:id", (req, res) => {
     }
 });
 
-
-
 // ==========================================
 // 6. SERVER DİNLEME MOTORU
 // ==========================================
 const PORT = 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 Server ${PORT} portu üzerinde aktif olarak çalışıyor.`);
+    console.log(`🚀 Sunucu aktif: http://localhost:${PORT}`);
 });
-
-
-// Sunucu Kilit Açma Satırı
-const PORT = 3001;
-app.listen(PORT, () => console.log(`Backend sistem aktif: http://localhost:${PORT}`));

@@ -270,18 +270,19 @@ import { ref } from 'vue';
 
     <!-- ! SEPET SİDEBAR -->
     <div class="container">
-        <div class="sepetsidebar">
-            <Sepet />
+        <!-- v-if ile sepetin görünürlüğünü bağladık -->
+        <div v-if="isSepetOpen" class="sepetsidebar">
+            <!-- Eğer sepet içinden de kapatma tetiklenecekse event dinleyebilirsin -->
+            <Sepet @close-sepet="isSepetOpen = false" />
         </div>
 
-
         <RouterView />
-
     </div>
+
 
     <!-- ! FOOTER -->
     <footer class="container-fluid w-100 px-0 py-5 text-white border-top border-white border-opacity-10"
-        style="background-color: green; margin-top: 100px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+        style="background-color: green; margin-top: 0px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
 
         <!-- 10 Sütun Genişliğinde Ortalanmış Ana Sarmalayıcı -->
         <div class="col-12 col-xl-10 mx-auto px-0">
@@ -411,41 +412,38 @@ import { ref } from 'vue';
 export default {
     data() {
         return {
+            // Sepetin açık/kapalı olma durumunu tutan yeni değişken
+            isSepetOpen: true, 
+
             nav_search: "",
-
-            showSuccessToast: false, // İlk başta gizli olacak
-
+            showSuccessToast: false,
             sepet: reactive([
                 { name: "aaaa", stock: 40, price: 100 },
                 { name: "bbbb", stock: 40, price: 200 },
                 { name: "ccc", stock: 40, price: 300 },
                 { name: "ddd", stock: 40, price: 400 }
             ]),
-
-            // Kayıt verileriniz (Dizi yapınız korunuyor)
             user: [
                 { firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: false }
             ],
-
-
-            // GİRİŞ VERİLERİNİZ (Kutular tam olarak buraya yazacak)
-            loginUser: {
-                email: '',
-                pass: '',
-                check: false
-            },
-
-            errors: {
-                firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: '', general: ''
-            },
+            loginUser: { email: '', pass: '', check: false },
+            errors: { firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: '', general: '' },
             selectedRole: 'user',
             showLoginToast: false,
             loggedInUserName: '',
-
-            baseUrl: 'http://localhost:5000', // Kendi API adresiniz
-
+            baseUrl: 'http://localhost:5000',
         }
     },
+    watch: {
+        // Rota her değiştiğinde bu fonksiyon çalışır
+        $route(to) {
+            // Eğer kullanıcı checkout (ödeme) sayfasına gittiyse sepeti kapat
+            if (to.path === '/checkout') {
+                this.isSepetOpen = false;
+            }
+        }
+    },
+
 
     mounted() {
 
@@ -455,10 +453,6 @@ export default {
         return {
             sepet: this.sepet
         }
-    },
-
-    watch: {
-
     },
 
     computed: {
