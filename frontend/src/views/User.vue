@@ -1,19 +1,18 @@
 <template>
-    <!-- ANA TASARIM SARMALAYICISI: -->
+    <!-- ANA TASARIM SARMALAYICISI -->
     <div class="user-layout row g-0 m-0 p-0 text-dark"
         style="padding-top: 86px; min-height: calc(100vh - 86px); background-color: #ffffff; width: 100%; overflow-x: hidden;">
 
         <!-- ========================================================
         1. SABİT SOL SIDEBAR (KULLANICI PANELİ SÜRÜMÜ)
         ======================================================== -->
-        <!-- Renk tonu ve arka plan rgba(25, 135, 84, 0.93) yani hafif şeffaf Bootstrap Yeşili yapıldı -->
         <div class="user-sidebar d-flex flex-column justify-content-between p-3 position-fixed col-12 col-md-2"
             style="background-color: rgba(25, 135, 84, 0.93); left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1030; box-shadow: 2px 0 10px rgba(0,0,0,0.1); padding-top: 20px !important;">
 
             <!-- ÜST VE ORTA ALAN GRUBU -->
             <div class="w-100 px-2 mx-auto d-flex flex-column align-items-center">
 
-                <!-- 1. EN ÜSTTEKİ ANASAYFA BUTONU (Aynen Korundu) -->
+                <!-- 1. EN ÜSTTEKİ ANASAYFA BUTONU -->
                 <RouterLink to="/"
                     class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate mb-4"
                     style="width: 80%; gap: 8px;" :style="passiveStyle">
@@ -22,11 +21,11 @@
 
                 <!-- 2. ORTADAKİ KULLANICI PANELİ BAŞLIĞI -->
                 <h6 class="text-white text-center mb-2 pb-2 text-truncate w-100"
-                    style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-top: 90px; font-weight: 400; font-size: 20px; letter-spacing: 0.5px;">
+                    style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-top: 20px; font-weight: 400; font-size: 16px; letter-spacing: 0.5px;">
                     KULLANICI PANELİ
                 </h6>
 
-                <!-- ORTADAKİ MENÜ BUTONLARI (İsteklerinize Göre Güncellendi) -->
+                <!-- ORTADAKİ MENÜ BUTONLARI -->
                 <div class="d-flex flex-column gap-2 mt-2 align-items-center w-100">
                     <!-- EĞİTİMLER -->
                     <button @click="state = 'courses'"
@@ -58,7 +57,7 @@
                 </div>
             </div>
 
-            <!-- 3. EN ALTAKİ USERNAME VE İKON ALANI (Aynen Korundu) -->
+            <!-- 3. EN ALTAKİ USERNAME VE İKON ALANI -->
             <div class="pt-3 w-100 px-2" style="border-top: 1px solid rgba(255,255,255,0.2);">
                 <div class="mb-2 w-100 text-center text-md-start ps-2">
                     <h6 class="text-white m-0 opacity-75 text-truncate mb-1"
@@ -79,40 +78,35 @@
                     </button>
                 </div>
             </div>
-
         </div>
 
-
-             <!-- ========================================================
+        <!-- ========================================================
         2. SAĞ İÇERİK ALANI (KULLANICI PANELİ SÜRÜMÜ)
         ======================================================== -->
         <div class="user-main-container d-flex flex-column justify-content-between col-12 col-md-10 offset-md-2"
-            style="min-height: calc(100vh - 86px); margin-top: 80px; background-color: #ffffff; position: relative; z-index: 1;">
+            style="min-height: calc(100vh - 86px); margin-top: 0px; background-color: #ffffff; position: relative; z-index: 1;">
 
             <!-- Üst Dinamik İçerik Alanı -->
-            <div class="w-100" style="min-height: 75vh; padding-top: 20px;">
-                <!-- EĞİTİMLER SEKMESİ -->
+            <div class="w-100 px-4" style="min-height: 75vh; padding-top: 20px;">
+                
+                <!-- 1. EĞİTİMLER SEKMESİ -->
                 <div v-if="state === 'courses'">
-                    <!-- <userCourses /> bileşeni veya eğitim listesi buraya gelecek -->
-                    <div class="p-3 text-muted">Eğitimlerim modülü yükleniyor...</div>
+                    <user-educations />
                 </div>
 
-                <!-- SERTİFİKALAR SEKMESİ -->
+                <!-- 2. SERTİFİKALAR SEKMESİ -->
                 <div v-if="state === 'certificates'">
-                    <!-- <userCertificates /> bileşeni veya sertifika listesi buraya gelecek -->
-                    <div class="p-3 text-muted">Sertifikalarım modülü yükleniyor...</div>
+                    <user-sertificates />
                 </div>
 
-                <!-- ÜRÜNLER SEKMESİ (%5 İNDİRİMLİ) -->
+                <!-- 3. ÜRÜNLER SEKMESİ -->
                 <div v-if="state === 'products'">
-                    <!-- <userProducts /> bileşeni veya indirimli ürün listesi buraya gelecek -->
-                    <div class="p-3 text-muted">İndirimli Ürünler modülü yükleniyor...</div>
+                    <user-products />
                 </div>
 
-                <!-- SİPARİŞLER SEKMESİ -->
+                <!-- 4. SİPARİŞLER SEKMESİ -->
                 <div v-if="state === 'orders'">
-                    <!-- <userOrders /> bileşeni veya sipariş geçmişi buraya gelecek -->
-                    <div class="p-3 text-muted">Sipariş Geçmişim modülü yükleniyor...</div>
+                    <user-orders />
                 </div>
             </div>
 
@@ -121,50 +115,49 @@
                 style="font-size: 12px; width: 100%; background-color: #ffffff;">
                 &copy; 2026 Gökçe Hilal Akademi | Öğrenci ve Kullanıcı Paneli
             </div>
-
         </div>
-
     </div>
 </template>
 
 <script>
-import adminProducts from '@/components/admin-products.vue'
-import adminOrders from '@/components/admin-orders.vue'
-import adminUsers from '@/components/admin-users.vue'
-import adminMessages from '@/components/admin-messages.vue'
+// Alt bileşenlerin (Subcomponents) içeri aktarılması
+import userEducations from '@/components/user-educations.vue'
+import userSertificates from '@/components/user-sertificates.vue'
+import userOrders from '@/components/user-orders.vue'
+import userProducts from '@/components/user-products.vue'
 
 export default {
-    name: 'AdminView',
+    name: 'UserView',
     components: {
-        adminProducts,
-        adminOrders,
-        adminUsers,
-        adminMessages
+        userEducations,
+        userSertificates,
+        userOrders,
+        userProducts
     },
     data() {
         return {
-            state: "products",
-            Username: sessionStorage.getItem("userName") || "Admin",
+            state: "courses", 
+            Username: sessionStorage.getItem("userName") || "Kullanıcı",
             baseUrl: "http://localhost:3001",
             activeStyle: {
                 backgroundColor: '#C71585',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '5px',
-                fontSize: '12px',
+                fontSize: '13px',
                 transition: 'all 0.2s ease'
             },
             passiveStyle: {
                 backgroundColor: '#ffffff',
-                color: 'green',
-                border: '1px solid rgba(0,0,0,0.05)',
+                color: '#198754',
+                border: 'none',
                 borderRadius: '5px',
-                fontSize: '12px',
+                fontSize: '13px',
                 transition: 'all 0.2s ease'
             }
         };
     },
-      mounted() {
+          mounted() {
         // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp kullanıcı panelinde tamamen gizliyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
@@ -183,51 +176,21 @@ export default {
         if (footer) footer.style.display = '';
     },
     methods: {
-        checkAdminSession() {
-            let id = sessionStorage.getItem("userId");
-            if (!id || id === "undefined" || id === "null") {
-                sessionStorage.setItem("userId", "1");
-                id = "1";
-            }
-            this.getUsername(id);
-        },
-        async getUsername(verifiedId) {
-            try {
-                const res = await fetch(`${this.baseUrl}/api/getUsername/${verifiedId}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: verifiedId })
-                });
-                if (!res.ok) throw new Error("Sunucu hatası.");
-                const data = await res.json();
-                if (data) {
-                    this.Username = data.name || data;
-                    sessionStorage.setItem("userName", this.Username);
-                }
-            } catch (error) {
-                console.error("Kullanıcı adı çekilemedi:", error.message);
-            }
-        },
         setProfile() {
-            alert("Profil ayarları modülü yakında aktif edilecek.");
+            alert("Profil ayarları modülü yakında aktif edilecektir.");
         },
         logout() {
             sessionStorage.clear();
-            this.$router.push("/");
-            // Yedek Güvenlik: Çıkış yapıldığında ana siteye dönerken navbarın anında görünmesini garanti eder
-            const mainNavbar = document.querySelector('.main-nav-container');
-            if (mainNavbar) mainNavbar.style.display = '';
+            alert("Başarıyla çıkış yapıldı.");
+            this.$router.push('/');
         }
     }
 };
 </script>
 
 <style scoped>
-.btn {
-    transition: all 0.2s ease-in-out;
-}
-.btn:hover {
-    opacity: 0.95;
-    transform: translateX(2px);
-}
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
 </style>

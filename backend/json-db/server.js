@@ -202,6 +202,23 @@ app.delete("/api/products/:id", (req, res) => {
     });
 });
 
+// =========================================================================
+// MAĞAZA ÜRÜNLERİNİ VERİTABANINDAN ÇEKME (GET - /api/productsPage)
+// =========================================================================
+app.get('/api/productsPage', (req, res) => {
+    // Veri tabanınızdaki orijinal p_price_disc ve p_img1 sütunları eklendi
+    const sql = "SELECT p_id, p_name, p_price_disc, p_price, p_stock, p_desc, p_img1 FROM products ORDER BY p_id ASC";
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("MySQL Ürün Çekme Hatası:", err.message);
+            return res.status(500).json({ error: "Ürünler veri tabanından yüklenemedi." });
+        }
+        res.json(results);
+    });
+});
+
+
 // ==========================================================================
 // 4. KULLANICI YÖNETİMİ (ADMIN-USERS) API ROTACILARI
 // ==========================================================================
@@ -303,6 +320,65 @@ app.delete("/api/users/:id", (req, res) => {
         res.status(200).json("Kullanıcı silindi.");
     });
 });
+
+// 🟢 SİPARİŞ KAYDETME ENDPOINT'İ (/api/orders)
+app.post('/api/orders', (req, res) => {
+    // Frontend'den (Vue) gönderilen verileri parçalıyoruz
+    const { sepet, order, amount } = req.body;
+
+    // 1. Güvenlik ve Doğrulama Kontrolü
+    if (!sepet || sepet.length === 0) {
+        return res.status(400).json({ error: "Sepetiniz boş, sipariş oluşturulamaz." });
+    }
+    if (!order || !order.TC || !order.address) {
+        return res.status(400).json({ error: "Fatura ve adres bilgileri eksik." });
+    }
+
+    // 2. Rastgele ve Benzersiz Bir Sipariş Numarası Üretme (Örn: ORD-593821)
+    const siparisNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000); 
+
+    // 3. Çoklu ürün dizisini veritabanındaki TEXT alanına yazabilmek için string'e çeviriyoruz
+    const urunlerString = JSON.stringify(sepet); 
+
+    // Müşterinin tam adı birleştiriliyor
+    const musteriAdi = `${order.firstName} ${order.lastName}`;
+
+    // 4. SQL Sorgusu (Veri tabanınızdaki orders sütun isimleriyle birebir uyumlu)
+    const sql = `INSERT INTO orders 
+    (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_state, o_zip, o_amount) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const values = [
+        siparisNo,
+        order.TC,
+        urunlerString,
+        musteriAdi,
+        order.email,
+        order.phone,
+        order.address,
+        order.state,
+        order.zip,
+        amount
+    ];
+
+    // 5. Sorguyu Veritabanında Çalıştırma
+    // Not: Sizin projenizde bağlantı değişkeni ismi 'db', 'connection' veya 'pool' olabilir.
+    // Kendi projenizdeki isme göre (Örn: db.query) burayı güncelleyin.
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("SQL Hatası:", err);
+            return res.status(500).json({ error: "Veritabanına kaydedilirken bir hata oluştu." });
+        }
+        
+        // İşlem başarılı ise frontend'e olumlu yanıt dönüyoruz
+        res.status(201).json({ 
+            success: true, 
+            message: "Siparişiniz başarıyla alındı!", 
+            orderId: siparisNo 
+        });
+    });
+});
+
 
 // ==========================================================================
 // 5. MESAJLAR YÖNETİMİ (ADMIN-MESSAGES) API ROTACILARI (%100 VERİTABANI UYUMLU)

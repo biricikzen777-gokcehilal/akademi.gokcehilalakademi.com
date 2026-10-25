@@ -145,7 +145,8 @@ export default {
                 transition: 'all 0.2s ease'
             }
         };
-    },    mounted() {
+    },   
+    mounted() {
         // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp tamamen gizliyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');

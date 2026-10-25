@@ -3,7 +3,7 @@
         <!-- ÜST BAŞLIK VE EKLEME BUTONU -->
         <div class="d-flex justify-content-between align-items-center mb-4 pt-3 px-3">
             <h4 class="fw-semibold text-dark m-0" style="font-size: 20px;">Ürün Yönetimi</h4>
-            <button type="button" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
+            <button type="button" style="background-color: #008000;"class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
                 <i class="bi bi-plus-circle"></i> Yeni Ürün Ekle
             </button>
         </div>
@@ -115,7 +115,7 @@
                             </div>
                             <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2" style="font-size: 13px;">
                                 <button type="button" class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3" @click="closeModal">Vazgeç</button>
-                                <button type="submit" class="btn btn-sm btn-success py-1_5 px-3">Ürünü Kaydet</button>
+                                <button type="submit" style="background-color: #008000;"class="btn btn-sm btn-success py-1_5 px-3">Ürünü Kaydet</button>
                             </div>
                         </form>
                     </div>

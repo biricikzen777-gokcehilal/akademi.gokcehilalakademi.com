@@ -11,25 +11,26 @@ import { ref } from 'vue';
 
 <template>
 
-<!-- ANA NAVBAR SARMALAYICISI (Alttan ve üstten tam 13px boşluk kilitlendi) -->
-<div class="w-100 main-nav-container shadow-sm" style="padding-top: 13px; padding-bottom: 13px;">
-    <div class="container-fluid px-custom">
-        <nav class="navbar navbar-expand-lg bg-white p-0">
-            <div class="container-fluid p-0">
+    <!-- ANA NAVBAR SARMALAYICISI (Alttan ve üstten tam 13px boşluk kilitlendi) -->
+    <div class="w-100 main-nav-container shadow-sm" style="padding-top: 13px; padding-bottom: 13px;">
+        <div class="container-fluid px-custom">
+            <nav class="navbar navbar-expand-lg bg-white p-0">
+                <div class="container-fluid p-0">
 
 
-                     <!-- LOGO ALANI -->
+                    <!-- LOGO ALANI -->
                     <RouterLink class="navbar-brand py-0" to="/">
-                        <img width="145px" src="/src/assets/img/logo.jpg" alt="Gökçe Hilal Akademi LOGO" class="nav-logo">
+                        <img width="145px" src="/src/assets/img/logo.jpg" alt="Gökçe Hilal Akademi LOGO"
+                            class="nav-logo">
                     </RouterLink>
-                    
+
                     <!-- MOBIL MENÜ BUTONU -->
                     <button class="navbar-toggler border-0 shadow-none p-1" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Menüyü Aç/Kapat">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    
+
                     <!-- MENÜ VE ARAMA ALANI -->
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <!-- Menü Bağlantı Linkleri -->
@@ -130,8 +131,11 @@ import { ref } from 'vue';
 
                         <!-- ROBOT CHECKBOX -->
                         <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="robotCheck" v-model="loginUser.check">
-                            <label class="form-check-label" for="robotCheck">Gerçekten Robot Değilim!</label>
+                            <!-- input içine border-success ve checked durumunda arka plan için w3-schools / bootstrap uyumlu özel yapı eklendi -->
+                            <input type="checkbox"
+                                class="form-check-input border-success shadow-none bg-success-checked" id="robotCheck"
+                                v-model="loginUser.check">
+                            <label class="form-check-label fw-medium" for="robotCheck">Gerçekten Robot Değilim!</label>
                         </div>
 
                         <!-- BUTONUN form etiketinin İÇİNDE ve type="submit" olduğundan emin olun -->
@@ -413,7 +417,7 @@ export default {
     data() {
         return {
             // Sepetin açık/kapalı olma durumunu tutan yeni değişken
-            isSepetOpen: true, 
+            isSepetOpen: true,
 
             nav_search: "",
             showSuccessToast: false,
@@ -757,6 +761,7 @@ export default {
     position: relative;
     z-index: 1040;
 }
+
 .px-custom {
     padding-left: 7% !important;
     padding-right: 7% !important;
@@ -765,6 +770,7 @@ export default {
 .nav-logo {
     transition: transform 0.2s ease;
 }
+
 .nav-logo:hover {
     transform: scale(1.02);
 }
@@ -773,13 +779,16 @@ export default {
    2. YENİLENEN BÜYÜK MENÜ BAĞLANTILARI VE DİNAMİK KALINLAŞMA MOTORU
    ========================================================================== */
 .custom-nav-links {
-    gap: 18px; /* Linkler arası dengeli ve ferah boşluk */
+    gap: 18px;
+    /* Linkler arası dengeli ve ferah boşluk */
     padding-left: 15px;
 }
 
 .nav-link-item {
-    font-size: 16px !important; /* İstediğiniz gibi yazı boyutu büyütüldü */
-    font-weight: 400 !important; /* Başlangıç font ağırlığı fw-medium (500) yapıldı */
+    font-size: 16px !important;
+    /* İstediğiniz gibi yazı boyutu büyütüldü */
+    font-weight: 400 !important;
+    /* Başlangıç font ağırlığı fw-medium (500) yapıldı */
     color: #2b2b2b !important;
     text-decoration: none;
     letter-spacing: 0.3px;
@@ -791,8 +800,9 @@ export default {
 /* DÜZELTİLDİ: Mouse ile üzerine gelindiğinde veya aktifken font-weight artar (600) ve yeşil olur */
 .nav-link-item:hover,
 .router-link-active.nav-link-item {
-    color: #008000 !important; 
-    font-weight: 500 !important; /* fw-semibold / bold seviyesine yumuşak geçiş */
+    color: #008000 !important;
+    font-weight: 500 !important;
+    /* fw-semibold / bold seviyesine yumuşak geçiş */
 }
 
 /* Profil İkonu Tasarımı */
@@ -803,10 +813,27 @@ export default {
     padding: 6px;
     transition: color 0.2s ease, transform 0.2s ease;
 }
+
 .nav-profile-icon:hover {
     color: #008000;
     transform: scale(1.05);
 }
+
+    /* Onay kutusunun dış çerçevesi ve tıklandığında içi tam yeşil olur */
+    .form-check-input:checked {
+        background-color: #198754 !important; /* Tam yeşil renk */
+        border-color: #198754 !important;
+    }
+    
+    /* Seçilmediğinde bile dış çizgisi yeşil görünsün */
+    .form-check-input {
+        border-color: #198754 !important;
+    }
+
+    /* Mavi renkli gölge efekti yerine hafif yeşil parlama verir */
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
+    }
 
 /* ==========================================================================
    3. MİNİMALİST ARAMA KUTUSU VE BUTONU
