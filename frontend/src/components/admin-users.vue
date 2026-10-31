@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4 pt-3 px-3">
             <h4 class="fw-semibold text-dark m-0" style="font-size: 20px;">Kullanıcı Yönetimi</h4>
             <button type="button" style="background-color: #008000;" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
-                <i class="bi bi-person-plus" ></i> Yeni Kullanıcı Ekle
+            <i class="bi bi-person-plus"></i> Yeni Kullanıcı Ekle
             </button>
         </div>
 
@@ -118,7 +118,8 @@
                 </div>
             </div>
         </Teleport>
-                <!-- BAŞARILI TOAST BİLDİRİMİ -->
+        
+        <!-- BAŞARILI TOAST BİLDİRİMİ -->
         <Teleport to="body">
             <Transition name="toast-fade">
                 <div v-if="showSuccessToast" class="custom-toast-overlay">

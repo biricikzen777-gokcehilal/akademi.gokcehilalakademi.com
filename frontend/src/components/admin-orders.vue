@@ -21,9 +21,9 @@
                     </thead>
                     <tbody>
                         <tr v-for="(order, index) in orders" :key="order.id" class="p-0 m-0">
-                            <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ order.id }}</th>
+                            <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ order.o_id }}</th>
                             <td class="p-0 m-0 fw-medium text-primary ps-1">{{ order.o_no }}</td>
-                            <td class="p-0 m-0 fw-semibold text-success">{{ Number(order.o_amount || 0).toFixed(2) }} ₺</td>
+                            <td class="p-0 m-0 fw-semibold text-success">{{ Number(order.o_amount || 0).toFixed(2) }}₺</td>
                             <td class="p-0 m-0 text-secondary">{{ order.o_date }}</td>
                             <td class="p-0 m-0">
                                 <select class="form-select form-control-sm border-light-subtle rounded-1 py-0 px-1 shadow-none" 
@@ -37,10 +37,10 @@
                             <td class="text-end p-0 m-0" style="padding-right: 10px !important;">
                                 <div class="d-inline-flex gap-1">
                                     <button class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
-                                        @click="updateOrder(order)">Güncelle</button>
+                                        @click="updateOrder(order.o_id)">Güncelle</button>
 
                                     <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
-                                        @click="deleteOrder(order.id)">Sil</button>
+                                        @click="deleteOrder(order.o_id)">Sil</button>
 
                                     <button class="btn btn-sm btn-outline-secondary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
                                         @click="openDetails(index)">
@@ -162,7 +162,7 @@ export default {
             }
         },
 
-                // API: Siparişi Sil (DELETE)
+        // API: Siparişi Sil (DELETE)
         async deleteOrder(id) {
             if (!confirm("Bu siparişi silmek istediğinize emin misiniz?")) return;
             try {

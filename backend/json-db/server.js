@@ -12,6 +12,7 @@ app.use(express.json());
 // Yüklenen klasör yapısının tarayıcıdan/frontendden okunabilmesi için dışarı açıyoruz
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+
 // ==========================================
 // 1. MYSQL VERİTABANI BAĞLANTI AYARLARI
 // ==========================================
@@ -30,6 +31,7 @@ db.connect((err) => {
     }
 });
 
+
 // ==========================================
 // YARDIMCI FONKSİYON: Klasör Adı İçin Yazıyı Temizle
 // ==========================================
@@ -44,6 +46,7 @@ function slugifyFolderName(text) {
     });
     return slug.replace(/[^a-z0-9]/g, ''); 
 }
+
 
 // ==========================================
 // 2. 3 RESMİ AYRI AYRI YAKALAYAN VE KLASÖRLEYEN MULTER MOTORU
@@ -69,6 +72,7 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+
 
 // ==========================================
 // 3. ÜRÜN YÖNETİMİ (PRODUCTS) API ROTACILARI
@@ -207,7 +211,7 @@ app.delete("/api/products/:id", (req, res) => {
 // =========================================================================
 app.get('/api/productsPage', (req, res) => {
     // Veri tabanınızdaki orijinal p_price_disc ve p_img1 sütunları eklendi
-    const sql = "SELECT p_id, p_name, p_price_disc, p_price, p_stock, p_desc, p_img1 FROM products ORDER BY p_id ASC";
+    const sql = "SELECT p_id, p_img1, p_img2, p_img3, p_name, p_stock, p_price, p_price_disc, p_active, p_desc FROM products ORDER BY p_id ASC";
     
     db.query(sql, (err, results) => {
         if (err) {
@@ -321,6 +325,7 @@ app.delete("/api/users/:id", (req, res) => {
     });
 });
 
+
 // 🟢 SİPARİŞ KAYDETME ENDPOINT'İ (/api/orders)
 app.post('/api/orders', (req, res) => {
     // Frontend'den (Vue) gönderilen verileri parçalıyoruz
@@ -345,7 +350,7 @@ app.post('/api/orders', (req, res) => {
 
     // 4. SQL Sorgusu (Veri tabanınızdaki orders sütun isimleriyle birebir uyumlu)
     const sql = `INSERT INTO orders 
-    (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_state, o_zip, o_amount) 
+    (o_no, o_tc, o_products, o_person, o_email, o_tel, o_adress, o_status, o_zip, o_amount) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const values = [
@@ -386,7 +391,7 @@ app.post('/api/orders', (req, res) => {
 
 //? GET - Tüm iletişim mesajlarını listele
 app.get("/api/messages", (req, res) => {
-    const query = "SELECT m_id, m_firstName, m_lastName, m_email, m_phone, m_subject, m_message, m_created_at FROM messages ORDER BY m_id DESC";
+    const query = "SELECT m_id, m_firstName, m_lastName, m_email, m_tel, m_subject, m_message, m_created_at, m_status FROM messages ORDER BY m_id DESC";
     db.query(query, (err, results) => {
         if (err) {
             console.error("❌ MySQL GET Messages Hatası:", err.message);
@@ -409,7 +414,7 @@ app.post("/api/messages", (req, res) => {
 
         const query = `
             INSERT INTO messages 
-            (m_firstName, m_lastName, m_email, m_phone, m_subject, m_message) 
+            (m_firstName, m_lastName, m_email, m_tel, m_subject, m_message) 
             VALUES (?, ?, ?, ?, ?, ?)
         `;
         
@@ -453,7 +458,6 @@ app.delete("/api/messages/:id", (req, res) => {
     });
 });
 
-
 //? PUT - Mesaj yanıt durumunu güncelle
 app.put("/api/messages/:id", (req, res) => {
     try {
@@ -481,9 +485,11 @@ app.put("/api/messages/:id", (req, res) => {
     }
 });
 
+
 // ==========================================
 // 6. SERVER DİNLEME MOTORU
 // ==========================================
+
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu aktif: http://localhost:${PORT}`);

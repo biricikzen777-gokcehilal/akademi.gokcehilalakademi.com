@@ -122,7 +122,7 @@ export default {
                         lastName: this.newMessage[0].m_lastName,
                         subject: this.newMessage[0].m_subject,
                         message: this.newMessage[0].m_message,
-                        created_at: this.newMessage[0].created_at,
+                        created_at: this.newMessage[0].m_created_at,
                     })
                 });
                 if (!res.ok) throw new Error("Mesaj eklenirken bir hata oluştu.");

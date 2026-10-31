@@ -123,7 +123,6 @@
             </div>
         </Teleport>
 
-
         <!-- BAŞARILI TOAST BİLDİRİMİ -->
         <Teleport to="body">
             <Transition name="toast-fade">

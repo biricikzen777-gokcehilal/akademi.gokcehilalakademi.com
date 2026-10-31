@@ -167,7 +167,47 @@ app.delete("/api/products/:id", async (req, res) => {
 });
 
 
+// post ekle.......................................................................
+//? POST - Yeni mesaj ekle (İletişim Formundan Gelen Veriyi Kaydeder)
+app.post("/api/messages", (req, res) => {
+    try {
+        const { firstName, lastName, email, code, tel, subject, message } = req.body;
 
+        if (!firstName || !lastName || !email || !message) {
+            return res.status(400).json("Gerekli alanlar eksik geldi.");
+        }
+
+        const combinedPhone = code ? `${code} ${tel}` : tel;
+
+        const query = `
+            INSERT INTO messages 
+            (m_firstName, m_lastName, m_email, m_tel, m_subject, m_message) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        
+        const values = [
+            firstName.trim(), 
+            lastName.trim(), 
+            email.trim(), 
+            combinedPhone ? combinedPhone.trim() : "", 
+            subject ? subject.trim() : "Teşekkür", 
+            message.trim()
+        ];
+        res.status(201).json("Mesaj başarıyla iletildi.");
+
+        // db.query(query, values, (err, result) => {
+        //     if (err) {
+        //         console.error("❌ MySQL INSERT Message Hatası Detayı:", err.message);
+        //         // Detaylı hatayı terminalde görebilmek için mutlaka buraya log ekledik
+        //         return res.status(500).json({ error: err.message });
+        //     }
+        //     res.status(201).json("Mesaj başarıyla iletildi.");
+        // });
+    } catch (e) {
+        console.error("Sistemsel Mesaj Kayıt Hatası:", e.message);
+        res.status(500).json("Sunucu Hatası");
+    }
+});
 
 //! MESAJ LİSTELE - GET - SQL SORGUSU: SELECT
 app.get("/api/messages", async (req, res) => {
@@ -438,7 +478,7 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   const { email, pass } = req.body;
   try {
-    const [rows] = await db.query("SELECT u_id,u_role,u_firstName FROM users WHERE u_email=? AND u_pass=?", [email, pass]);
+    const [rows] = await db.query("SELECT u_id, u_firstName, u_lastName, u_role, u_email FROM users WHERE u_email = ? AND u_pass = ?", [email, pass]);
     console.log(rows);
     if (rows[0].u_id)
       res.status(200).json(rows);

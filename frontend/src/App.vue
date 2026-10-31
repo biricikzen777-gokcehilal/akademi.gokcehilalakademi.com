@@ -648,63 +648,80 @@ export default {
             return isValid;
         },
 
-        // 6. ANA GİRİŞ FONKSİYONU
-        login() {
+        // 6. ANA GİRİŞ FONKSİYONU (Async/Await & Veritabanı Uyumlu)
+        async login() {
             console.log("Giriş yap fonksiyonu tetiklendi. Seçili Rol:", this.selectedRole);
 
-            if (this.loginValidation()) {
-                try {
-                    const loginData = this.loginUser;
-                    const registeredUsers = JSON.parse(localStorage.getItem('registerStorage')) || [];
+            // Form doğrulaması başarılıysa işlemlere başla
+            if (!this.loginValidation()) return;
 
-                    const inputEmail = loginData.email.trim().toLowerCase();
-                    const inputPass = loginData.pass;
+            try {
+                const loginData = this.loginUser;
+                const inputEmail = loginData.email.trim().toLowerCase();
+                const inputPass = loginData.pass;
 
-                    const foundUser = registeredUsers.find(u =>
-                        u.email && u.email.toLowerCase() === inputEmail && u.pass === inputPass
-                    );
+                // Backend API'sine istek gönderiyoruz (Axios örneğidir, fetch de kullanabilirsin)
+                // Kendi projenizin API portuna göre burayı güncelleyin (Örn: http://localhost:5000/api/login)
+                const response = await axios.post('/api/login', {
+                    email: inputEmail,
+                    pass: inputPass
+                });
 
-                    const ADMIN_EMAIL = 'ruhsalsifa.akademi@gmail.com';
+                // Backend'den başarılı sonuç döndüğünde kullanıcı verilerini alıyoruz
+                if (response.data && response.data.success) {
+                    const userData = response.data.user;
+                    // userData içeriği veritabanından dönen satırdır: { u_firstName, u_lastName, u_active, u_email }
 
-                    if (foundUser) {
-                        if (this.selectedRole === 'admin' && foundUser.email !== ADMIN_EMAIL) {
-                            this.errors.general = "Bu alandan sadece yetkili admin girişi yapılabilir!";
-                            return;
-                        }
+                    // SQL tablonuzdaki u_active bilgisi (Örn: 1 veya 0 dizesi/sayısı olarak gelir)
+                    const dbActiveStatus = String(userData.u_active);
 
-                        if (this.selectedRole === 'user' && foundUser.email === ADMIN_EMAIL) {
-                            this.errors.general = "Admin hesabı ile kullanıcı panelinden giriş yapılamaz. Lütfen Admin Girişi butonunu seçin.";
-                            return;
-                        }
-
-                        this.loggedInUserName = `${foundUser.firstName} ${foundUser.lastName}`;
-                        sessionStorage.setItem("isLoggedIn", "1");
-
-                        const userRole = foundUser.email === ADMIN_EMAIL ? "1" : "0";
-                        sessionStorage.setItem("role", userRole);
-                        sessionStorage.setItem("userName", this.loggedInUserName);
-
-                        document.getElementById('loginClose')?.click();
-                        document.querySelector('#loginModal .btn-close')?.click();
-
-                        this.loginUser = { email: "", pass: "", check: false };
-                        this.showLoginToast = true;
-
-                        setTimeout(() => {
-                            this.showLoginToast = false;
-                            if (userRole === "1") {
-                                this.$router.push("/admin").catch(() => { });
-                            } else {
-                                this.$router.push("/user").catch(() => { });
-                            }
-                        }, 3000);
-
-                    } else {
-                        this.errors.general = "E-posta adresi veya şifre hatalı ya da böyle bir kullanıcı kayıtlı değil!";
+                    // Arayüzdeki seçim kontrolü: 'admin' seçtiyse u_active '1' olmalı
+                    if (this.selectedRole === 'admin' && dbActiveStatus !== '1') {
+                        this.errors.general = "Bu alandan sadece yetkili admin girişi yapılabilir!";
+                        return;
                     }
-                } catch (e) {
-                    console.error("Giriş hatası:", e.message);
-                    this.errors.general = "Sistemsel bir hata oluştu, lütfen tekrar deneyin.";
+
+                    // Arayüzdeki seçim kontrolü: 'user' seçtiyse u_active '0' olmalı
+                    if (this.selectedRole === 'user' && dbActiveStatus === '1') {
+                        this.errors.general = "Admin hesabı ile kullanıcı panelinden giriş yapılamaz. Lütfen Admin Girişi butonunu seçin.";
+                        return;
+                    }
+
+                    // Başarılı giriş sonrası oturum bilgilerini saklama (Session Storage)
+                    this.loggedInUserName = `${userData.u_firstName} ${userData.u_lastName}`;
+                    sessionStorage.setItem("isLoggedIn", "1");
+                    sessionStorage.setItem("role", dbActiveStatus); // '1' veya '0'
+                    sessionStorage.setItem("userName", this.loggedInUserName);
+
+                    // Modalları kapatma işlemleri
+                    document.getElementById('loginClose')?.click();
+                    document.querySelector('#loginModal .btn-close')?.click();
+
+                    // Formu sıfırla ve Toast mesajını göster
+                    this.loginUser = { email: "", pass: "", check: false };
+                    this.showLoginToast = true;
+
+                    // 3 saniye sonra ilgili panele yönlendir
+                    setTimeout(() => {
+                        this.showLoginToast = false;
+                        if (dbActiveStatus === "1") {
+                            this.$router.push("/admin").catch(() => { });
+                        } else {
+                            this.$router.push("/user").catch(() => { });
+                        }
+                    }, 3000);
+
+                } else {
+                    // Backend şifre yanlış veya kullanıcı yok dediyse
+                    this.errors.general = response.data.message || "E-posta adresi veya şifre hatalı!";
+                }
+
+            } catch (error) {
+                console.error("Giriş hatası:", error);
+                if (error.response && error.response.data && error.response.data.message) {
+                    this.errors.general = error.response.data.message;
+                } else {
+                    this.errors.general = "Sistemsel bir hata oluştu veya sunucuya bağlanılamadı.";
                 }
             }
         },
@@ -819,21 +836,22 @@ export default {
     transform: scale(1.05);
 }
 
-    /* Onay kutusunun dış çerçevesi ve tıklandığında içi tam yeşil olur */
-    .form-check-input:checked {
-        background-color: #198754 !important; /* Tam yeşil renk */
-        border-color: #198754 !important;
-    }
-    
-    /* Seçilmediğinde bile dış çizgisi yeşil görünsün */
-    .form-check-input {
-        border-color: #198754 !important;
-    }
+/* Onay kutusunun dış çerçevesi ve tıklandığında içi tam yeşil olur */
+.form-check-input:checked {
+    background-color: #198754 !important;
+    /* Tam yeşil renk */
+    border-color: #198754 !important;
+}
 
-    /* Mavi renkli gölge efekti yerine hafif yeşil parlama verir */
-    .form-check-input:focus {
-        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
-    }
+/* Seçilmediğinde bile dış çizgisi yeşil görünsün */
+.form-check-input {
+    border-color: #198754 !important;
+}
+
+/* Mavi renkli gölge efekti yerine hafif yeşil parlama verir */
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
+}
 
 /* ==========================================================================
    3. MİNİMALİST ARAMA KUTUSU VE BUTONU
