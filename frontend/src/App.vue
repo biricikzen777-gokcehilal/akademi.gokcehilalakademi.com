@@ -5,6 +5,8 @@ import Sepet from '@/components/sepet.vue'
 import { reactive } from 'vue';
 import { Modal } from 'bootstrap/dist/js/bootstrap.min';
 import { ref } from 'vue';
+import axios from 'axios';
+
 
 
 </script>
@@ -416,6 +418,7 @@ import { ref } from 'vue';
 export default {
     data() {
         return {
+            name: 'App',
             // Sepetin açık/kapalı olma durumunu tutan yeni değişken
             isSepetOpen: true,
 
@@ -648,7 +651,7 @@ export default {
             return isValid;
         },
 
-        // 6. ANA GİRİŞ FONKSİYONU (Async/Await & Veritabanı Uyumlu)
+        // 6. ANA GİRİŞ FONKSİYONU (Tamamen Yerleşik Fetch API Uyumlu)
         async login() {
             console.log("Giriş yap fonksiyonu tetiklendi. Seçili Rol:", this.selectedRole);
 
@@ -660,28 +663,41 @@ export default {
                 const inputEmail = loginData.email.trim().toLowerCase();
                 const inputPass = loginData.pass;
 
-                // Backend API'sine istek gönderiyoruz (Axios örneğidir, fetch de kullanabilirsin)
-                // Kendi projenizin API portuna göre burayı güncelleyin (Örn: http://localhost:5000/api/login)
-                const response = await axios.post('/api/login', {
-                    email: inputEmail,
-                    pass: inputPass
+                // DOĞRU PORT: Sizin sunucunuz 3001 portunda çalışıyor
+                const response = await fetch('http://localhost:3001/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: inputEmail,
+                        pass: inputPass
+                    })
                 });
 
+                // Sunucu bağlantısı başarısızsa hata fırlat
+                if (!response.ok) {
+                    throw new Error("Sunucu hata kodu döndürdü.");
+                }
+
+                // Backend'den dönen JSON verisini alıyoruz
+                const responseData = await response.json();
+
                 // Backend'den başarılı sonuç döndüğünde kullanıcı verilerini alıyoruz
-                if (response.data && response.data.success) {
-                    const userData = response.data.user;
-                    // userData içeriği veritabanından dönen satırdır: { u_firstName, u_lastName, u_active, u_email }
+                if (responseData && responseData.success) {
+                    const userData = responseData.user;
 
-                    // SQL tablonuzdaki u_active bilgisi (Örn: 1 veya 0 dizesi/sayısı olarak gelir)
-                    const dbActiveStatus = String(userData.u_active);
+                    // ÖNEMLİ NOT: Terminal çıktınızda veritabanından gelen alan 'u_role' olarak görünüyor!
+                    // Kodunuzdaki u_active mantığını u_role ile senkronize ediyoruz.
+                    const dbActiveStatus = String(userData.u_role || userData.u_active);
 
-                    // Arayüzdeki seçim kontrolü: 'admin' seçtiyse u_active '1' olmalı
+                    // Arayüzdeki seçim kontrolü: 'admin' seçtiyse role '1' olmalı
                     if (this.selectedRole === 'admin' && dbActiveStatus !== '1') {
                         this.errors.general = "Bu alandan sadece yetkili admin girişi yapılabilir!";
                         return;
                     }
 
-                    // Arayüzdeki seçim kontrolü: 'user' seçtiyse u_active '0' olmalı
+                    // Arayüzdeki seçim kontrolü: 'user' seçtiyse role '0' olmalı
                     if (this.selectedRole === 'user' && dbActiveStatus === '1') {
                         this.errors.general = "Admin hesabı ile kullanıcı panelinden giriş yapılamaz. Lütfen Admin Girişi butonunu seçin.";
                         return;
@@ -713,16 +729,12 @@ export default {
 
                 } else {
                     // Backend şifre yanlış veya kullanıcı yok dediyse
-                    this.errors.general = response.data.message || "E-posta adresi veya şifre hatalı!";
+                    this.errors.general = responseData.message || "E-posta adresi veya şifre hatalı!";
                 }
 
             } catch (error) {
                 console.error("Giriş hatası:", error);
-                if (error.response && error.response.data && error.response.data.message) {
-                    this.errors.general = error.response.data.message;
-                } else {
-                    this.errors.general = "Sistemsel bir hata oluştu veya sunucuya bağlanılamadı.";
-                }
+                this.errors.general = "Sistemsel bir hata oluştu veya sunucuya bağlanılamadı.";
             }
         },
 

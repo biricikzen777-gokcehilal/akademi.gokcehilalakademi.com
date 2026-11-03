@@ -13,9 +13,11 @@
                     
                     <!-- Resim Alanı & İndirim Rozeti (p_price_disc varsa gösterilir) -->
                     <div class="product-img-wrapper bg-light d-flex align-items-center justify-content-center p-3 position-relative">
-                        <span v-if="product.p_price_disc" class="badge bg-danger position-absolute top-0 start-0 m-3 px-2 py-1_5 rounded-2 shadow-sm" style="font-size: 11px;">
+                        
+                        <!-- İNDİRİM EKLE -->
+                        <!-- <span v-if="product.p_price_disc" class="badge bg-danger position-absolute top-0 start-0 m-3 px-2 py-1_5 rounded-2 shadow-sm" style="font-size: 11px;">
                             %10 İndirim
-                        </span>
+                        </span> -->
                         
                         <!-- Eğer veritabanında p_img1 doluysa resmi basar, yoksa şık bir ikon gösterir -->
                         <img v-if="product.p_img1" :src="product.p_img1" class="img-fluid rounded animate-img" :alt="product.p_name" style="max-height: 140px; object-fit: contain;">
@@ -37,10 +39,12 @@
                         <div>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex flex-column">
+                                    
+                                    <!-- FİYATIN ÜSTÜNÜ ÇİZ -->
                                     <!-- Üstü çizili eski fiyat p_price_disc alanından okunuyor -->
-                                    <span v-if="product.p_price_disc" class="text-muted text-decoration-line-through small mb-0">
+                                    <!-- <span v-if="product.p_price_disc" class="text-muted text-decoration-line-through small mb-0">
                                         {{ product.p_price_disc }}₺
-                                    </span>
+                                    </span> -->
                                     <span class="fw-bold fs-5 text-success m-0">
                                         {{ product.p_price }}₺
                                     </span>

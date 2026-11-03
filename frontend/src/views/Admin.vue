@@ -27,6 +27,13 @@
 
                 <!-- ORTADAKİ MENÜ BUTONLARI -->
                 <div class="d-flex flex-column gap-2 mt-2 align-items-center w-100">
+
+                    <button @click="state = 'users'"
+                        class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
+                        style="width: 80%;" :style="[state === 'users' ? activeStyle : passiveStyle]">
+                        <i class="bi bi-people me-2"></i> Kullanıcılar
+                    </button>
+
                     <button @click="state = 'products'"
                         class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                         style="width: 80%;" :style="[state === 'products' ? activeStyle : passiveStyle]">
@@ -37,12 +44,6 @@
                         class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                         style="width: 80%;" :style="[state === 'orders' ? activeStyle : passiveStyle]">
                         <i class="bi bi-cart3 me-2"></i> Siparişler
-                    </button>
-
-                    <button @click="state = 'users'"
-                        class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
-                        style="width: 80%;" :style="[state === 'users' ? activeStyle : passiveStyle]">
-                        <i class="bi bi-people me-2"></i> Kullanıcılar
                     </button>
 
                     <button @click="state = 'messages'"
@@ -85,14 +86,14 @@
 
             <!-- Üst Dinamik İçerik Alanı -->
             <div class="w-100" style="min-height: 75vh; padding-top: 20px;">
+                <div v-if="state === 'users'">
+                    <adminUsers />
                 <div v-if="state === 'products'">
                     <adminProducts />
                 </div>
                 <div v-if="state === 'orders'">
                     <adminOrders />
                 </div>
-                <div v-if="state === 'users'">
-                    <adminUsers />
                 </div>
                 <div v-if="state === 'messages'">
                     <adminMessages />
@@ -125,7 +126,7 @@ export default {
     },
     data() {
         return {
-            state: "products",
+            state: "users",
             Username: sessionStorage.getItem("userName") || "Admin",
             baseUrl: "http://localhost:3001",
             activeStyle: {
@@ -143,24 +144,34 @@ export default {
                 borderRadius: '5px',
                 fontSize: '12px',
                 transition: 'all 0.2s ease'
+            },
+            // ... diğer mevcut verilerin
+            isEditModalOpen: false, // Güncelleme modalının açık/kapalı durumu
+            editUser: {
+                id: null,
+                firstName: '',
+                lastName: '',
+                email: '',
+                tel: '',
+                role: '0'
             }
         };
-    },   
+    },
     mounted() {
         // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp tamamen gizliyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        
+
         if (mainNavbar) mainNavbar.style.display = 'none';
         if (footer) footer.style.display = 'none';
-        
+
         this.checkAdminSession();
     },
     unmounted() {
         // YENİLENDİ: Admin panelinden çıkıldığında (Anasayfa, Ürünler vb. geçildiğinde) navbar ve footer geri gelir
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        
+
         if (mainNavbar) mainNavbar.style.display = '';
         if (footer) footer.style.display = '';
     },
@@ -209,6 +220,7 @@ export default {
 .btn {
     transition: all 0.2s ease-in-out;
 }
+
 .btn:hover {
     opacity: 0.95;
     transform: translateX(2px);

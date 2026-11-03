@@ -3,8 +3,9 @@
         <!-- ÜST BAŞLIK VE EKLEME BUTONU -->
         <div class="d-flex justify-content-between align-items-center mb-4 pt-3 px-3">
             <h4 class="fw-semibold text-dark m-0" style="font-size: 20px;">Kullanıcı Yönetimi</h4>
-            <button type="button" style="background-color: #008000;" class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
-            <i class="bi bi-person-plus"></i> Yeni Kullanıcı Ekle
+            <button type="button" style="background-color: #008000;"
+                class="btn btn-success btn-sm shadow-sm d-flex align-items-center gap-2 py-2 px-3" @click="openModal">
+                <i class="bi bi-person-plus"></i> Yeni Kullanıcı Ekle
             </button>
         </div>
 
@@ -28,40 +29,58 @@
                         <tr v-for="(user, index) in users" :key="user.u_id" class="p-0 m-0">
                             <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ index + 1 }}</th>
                             <td class="p-0 m-0">
-                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="user.u_firstName">
+                                <input
+                                    class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" type="text" v-model="user.u_firstName">
                             </td>
                             <td class="p-0 m-0">
-                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="user.u_lastName">
+                                <input
+                                    class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" type="text" v-model="user.u_lastName">
                             </td>
                             <td class="p-0 m-0">
-                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="email" v-model="user.u_email">
+                                <input
+                                    class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" type="email" v-model="user.u_email">
                             </td>
                             <td class="p-0 m-0">
-                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="user.u_tel">
+                                <input
+                                    class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" type="text" v-model="user.u_tel">
                             </td>
                             <td class="p-0 m-0">
-                                <input class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" type="text" v-model="user.u_pass">
+                                <input
+                                    class="form-control form-control-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" type="text" v-model="user.u_pass">
                             </td>
                             <td class="p-0 m-0">
-                                <select class="form-select form-select-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0" style="font-size: 13px; height: 32px;" v-model="user.u_role">
+                                <select
+                                    class="form-select form-select-sm border-light-subtle rounded-0 shadow-none py-1 px-1 m-0"
+                                    style="font-size: 13px; height: 32px;" v-model="user.u_role">
                                     <option :value="0">Kullanıcı</option>
                                     <option :value="1">Admin</option>
                                 </select>
                             </td>
                             <td class="text-end p-0 m-0">
                                 <div class="d-inline-flex gap-1 me-1">
-                                    <button @click="updateUser(user.u_id, user.u_firstName, user.u_lastName, user.u_email, user.u_tel, user.u_pass, user.u_role)"
-                                        class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;">
+                                    <button
+                                        @click="updateUser(user.u_id, user.u_firstName, user.u_lastName, user.u_email, user.u_tel, user.u_pass, user.u_role)"
+                                        class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1"
+                                        style="font-size: 12px; height: 26px; line-height: 1;">
                                         <i class="bi bi-save"></i> Güncelle
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;" @click="deleteUser(user.u_id)">
+
+                                    <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1"
+                                        style="font-size: 12px; height: 26px; line-height: 1;"
+                                        @click="triggerDeleteUser(user.u_id)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                         <tr v-if="users.length === 0">
-                            <td colspan="8" class="text-center text-muted py-3">Henüz kayıtlı bir kullanıcı bulunmuyor.</td>
+                            <td colspan="8" class="text-center text-muted py-3">Henüz kayıtlı bir kullanıcı bulunmuyor.
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -73,7 +92,8 @@
             <div v-if="isModalOpen" class="custom-modal-backdrop" @click.self="closeModal">
                 <div class="custom-modal-dialog">
                     <div class="custom-modal-content border border-light-subtle rounded-2 shadow-lg">
-                        <div class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
+                        <div
+                            class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
                             <h5 class="m-0 text-dark fw-semibold" style="font-size: 15px;">Yeni Kullanıcı Ekle</h5>
                         </div>
                         <form @submit.prevent="addUser">
@@ -82,56 +102,140 @@
                                     <!-- [0] Dizi ifadeleri tamamen temizlendi, doğrudan nesneye bağlandı -->
                                     <div class="col-6">
                                         <label class="form-label text-muted mb-1" style="font-weight: 400;">Ad*</label>
-                                        <input type="text" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newUser.firstName" required placeholder="Örn: Ahmet">
+                                        <input type="text"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newUser.firstName" required placeholder="Örn: Ahmet">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Soyad*</label>
-                                        <input type="text" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newUser.lastName" required placeholder="Örn: Yılmaz">
+                                        <label class="form-label text-muted mb-1"
+                                            style="font-weight: 400;">Soyad*</label>
+                                        <input type="text"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newUser.lastName" required placeholder="Örn: Yılmaz">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Email*</label>
-                                        <input type="email" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newUser.email" required placeholder="example@hotmail.com">
+                                        <label class="form-label text-muted mb-1"
+                                            style="font-weight: 400;">Email*</label>
+                                        <input type="email"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newUser.email" required placeholder="example@hotmail.com">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Telefon*</label>
-                                        <input type="tel" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newUser.tel" required placeholder="5xxxxxxxxx">
+                                        <label class="form-label text-muted mb-1"
+                                            style="font-weight: 400;">Telefon*</label>
+                                        <input type="tel"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newUser.tel" required placeholder="5xxxxxxxxx">
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label text-muted mb-1" style="font-weight: 400;">Parola*</label>
-                                        <input type="password" class="form-control form-control-sm border-light-subtle shadow-none" v-model="newUser.pass" required placeholder="••••••••">
+                                        <label class="form-label text-muted mb-1"
+                                            style="font-weight: 400;">Parola*</label>
+                                        <input type="password"
+                                            class="form-control form-control-sm border-light-subtle shadow-none"
+                                            v-model="newUser.pass" required placeholder="••••••••">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-muted mb-1" style="font-weight: 400;">Rol*</label>
-                                        <select class="form-select form-select-sm border-light-subtle shadow-none" v-model="newUser.role" required>
+                                        <select class="form-select form-select-sm border-light-subtle shadow-none"
+                                            v-model="newUser.role" required>
                                             <option :value="0">Kullanıcı</option>
                                             <option :value="1">Admin</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
-                            <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2" style="font-size: 13px;">
-                                <button type="button" class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3" @click="closeModal">Vazgeç</button>
-                                <button type="submit" style="background-color: #008000; color: white;" class="btn btn-sm py-1_5 px-3">Kullanıcıyı Kaydet</button>
+                            <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2"
+                                style="font-size: 13px;">
+                                <button type="button"
+                                    class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3"
+                                    @click="closeModal">Vazgeç</button>
+                                <button type="submit" style="background-color: #008000; color: white;"
+                                    class="btn btn-sm py-1_5 px-3">Kullanıcıyı Kaydet</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         </Teleport>
-        
+
         <!-- BAŞARILI TOAST BİLDİRİMİ -->
         <Teleport to="body">
-            <Transition name="toast-fade">
-                <div v-if="showSuccessToast" class="custom-toast-overlay">
-                    <div class="custom-toast-card border border-light-subtle rounded-2 shadow-lg">
-                        <div class="toast-icon-wrapper bg-success text-white rounded-circle">
-                            <i class="bi bi-check-lg"></i>
-                        </div>
-                        <h6 class="m-0 text-dark" style="font-size: 14px; font-weight: 500;">Kullanıcı Başarıyla Eklendi</h6>
+            <Transition name="toast-slide">
+                <div v-if="showSuccessToast"
+                    class="fixed-top-center-toast border border-light-subtle rounded-3 shadow-lg">
+                    <div class="toast-icon-wrapper mb-3">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 60px;"></i>
                     </div>
+                    <h6 class="m-0 text-dark text-center fw-bold" style="font-size: 16px; line-height: 1.4;">
+                        Kullanıcı Başarıyla Eklendi
+                    </h6>
                 </div>
             </Transition>
         </Teleport>
+
+        <!-- SİLME ONAY MODALI (Dikeyde Daha Yukarıda Konumlanmış) -->
+        <Teleport to="body">
+            <div v-if="isDeleteModalOpen" class="custom-modal-backdrop" @click.self="closeDeleteModal">
+                <!-- margin-top değeri -20vh yapılarak daha da yukarı taşındı -->
+                <div class="custom-modal-dialog" style="max-width: 400px; margin-top: -20vh;">
+                    <div class="custom-modal-content border border-light-subtle rounded-3 shadow-lg bg-white">
+                        <div class="p-4 text-center">
+                            <div class="mb-3 text-warning">
+                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 36px;"></i>
+                            </div>
+                            <h5 class="text-dark fw-bold mb-2" style="font-size: 16px;">Kullanıcıyı Sil?</h5>
+                            <p class="text-muted px-2" style="font-size: 13px; line-height: 1.5;">
+                                Bu kullanıcıyı silmek istediğinizden emin misiniz? <br>
+                                <span class="text-muted" style="font-size: 12px;">Bu işlem veri tabanından
+                                    kaldırılacaktır.</span>
+                            </p>
+                        </div>
+                        <div class="border-top p-3 bg-light rounded-bottom-3 d-flex justify-content-end gap-2"
+                            style="font-size: 13px;">
+                            <button type="button"
+                                class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3"
+                                @click="closeDeleteModal">Vazgeç</button>
+                            <button type="button" @click="confirmDeleteUser"
+                                class="btn btn-sm btn-outline-danger py-1_5 px-3 fw-semibold shadow-none">Evet,
+                                Sil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- KULLANICI SİLİNDİ BAŞARI TOASTI -->
+        <Teleport to="body">
+            <Transition name="toast-slide">
+                <div v-if="showDeleteSuccessToast"
+                    class="fixed-top-center-toast border-danger-subtle border rounded-3 shadow-lg">
+                    <div class="toast-icon-wrapper mb-3">
+                        <i class="bi bi-check-circle-fill text-danger" style="font-size: 60px;"></i>
+                    </div>
+                    <h6 class="m-0 text-dark text-center fw-bold" style="font-size: 16px; line-height: 1.4;">
+                        Kullanıcı Başarıyla Silindi
+                    </h6>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- KULLANICI GÜNCELLENDİ BAŞARI TOASTI -->
+        <Teleport to="body">
+            <Transition name="toast-slide">
+                <div v-if="showUpdateSuccessToast"
+                    class="fixed-top-center-toast border-primary-subtle border rounded-3 shadow-lg">
+                    <!-- Mavi renkli modern güncelleme ikonu -->
+                    <div class="toast-icon-wrapper mb-3">
+                        <i class="bi bi-pencil-square text-primary" style="font-size: 60px;"></i>
+                    </div>
+                    <h6 class="m-0 text-dark text-center fw-bold px-3 mt-4" style="font-size: 16px; line-height: 1.5;">
+                        Kullanıcı Başarıyla Güncellendi
+                    </h6>
+                </div>
+            </Transition>
+        </Teleport>
+
+
     </div>
 </template>
 
@@ -144,16 +248,23 @@ export default {
             showSuccessToast: false,
             users: [],
             // v-model çakışmasını çözen, temiz nesne yapısı
-            newUser: { 
-                firstName: "", 
-                lastName: "", 
-                email: "", 
-                tel: "", 
-                pass: "", 
-                role: 0 
+            newUser: {
+                firstName: "",
+                lastName: "",
+                email: "",
+                tel: "",
+                pass: "",
+                role: 0
             },
             userMessage: null,
-            baseUrl: "http://localhost:3001"
+            baseUrl: "http://localhost:3001",
+
+
+            isDeleteModalOpen: false,      // Silme modalı kontrolü
+            userIdToDelete: null,
+            showUpdateSuccessToast: false // <--- BU SATIRI EKSİKSİZ EKLEYİN
+
+
         };
     },
     mounted() {
@@ -170,17 +281,19 @@ export default {
             this.resetForm();
         },
         resetForm() {
-            this.newUser = { 
-                firstName: "", 
-                lastName: "", 
-                email: "", 
-                tel: "", 
-                pass: "", 
-                role: 0 
+            this.newUser = {
+                firstName: "",
+                lastName: "",
+                email: "",
+                tel: "",
+                pass: "",
+                role: 0
             };
             this.userMessage = null;
         },
+
         // GET - Veritabanındaki tüm kullanıcıları listelemek için çeker
+
         async getUsers() {
             try {
                 const res = await fetch(`${this.baseUrl}/api/users`);
@@ -190,7 +303,9 @@ export default {
                 console.error("GET Hatası:", e.message);
             }
         },
+
         // POST - Modaldaki formu doldurup yeni kullanıcı ekler
+
         async addUser() {
             try {
                 const res = await fetch(`${this.baseUrl}/api/users`, {
@@ -198,18 +313,20 @@ export default {
                     headers: {
                         "Content-Type": "application/json"
                     },
+                    // Anahtarları backend'in istediği düz formatta bırakıp,
+                    // sadece rolü terminal çıktındaki gibi string ('0' veya '1') olarak gönderiyoruz:
                     body: JSON.stringify({
                         firstName: this.newUser.firstName,
                         lastName: this.newUser.lastName,
                         email: this.newUser.email,
                         tel: this.newUser.tel,
                         pass: this.newUser.pass,
-                        role: Number(this.newUser.role),
+                        role: this.newUser.role // Doğrudan seçilen değeri gönderiyoruz
                     })
                 });
-                
+
                 if (!res.ok) throw new Error("Sunucu kullanıcıyı ekleyemedi.");
-                
+
                 const data = await res.json();
                 this.userMessage = data;
 
@@ -220,14 +337,14 @@ export default {
                 setTimeout(() => {
                     this.showSuccessToast = false;
                     this.resetForm();
-                    this.getUsers(); // Eklenen yeni kullanıcıyı tabloda göstermek için listeyi yeniler
+                    this.getUsers(); // Listeyi yeniler
                 }, 1500);
 
             } catch (e) {
                 alert("Kullanıcı eklenirken bir hata oluştu: " + e.message);
             }
         },
-        // PUT - Tablo üzerindeki satır içi değişiklikleri kaydeder
+        // Butondan gelen tüm parametreleri sırasıyla yakalıyoruz
         async updateUser(u_id, u_firstName, u_lastName, u_email, u_tel, u_pass, u_role) {
             try {
                 const res = await fetch(`${this.baseUrl}/api/users/${u_id}`, {
@@ -240,19 +357,29 @@ export default {
                         lastName: u_lastName,
                         email: u_email,
                         tel: u_tel,
-                        pass: u_pass,
-                        role: Number(u_role)
+                        role: String(u_role)
                     })
                 });
 
                 if (!res.ok) throw new Error("Sunucu kullanıcıyı güncelleyemedi.");
-                alert("Kullanıcı başarıyla güncellendi!");
+
+                // 1. Tablo listesini yeniliyoruz
                 this.getUsers();
+
+                // 2. Eksik olan toast bildirimini burada tetikliyoruz!
+                this.showUpdateSuccessToast = true;
+                console.log("Kullanıcı başarıyla güncellendi.");
+
+                // 3. 1.5 saniye sonra otomatik kapanmasını sağlıyoruz
+                setTimeout(() => {
+                    this.showUpdateSuccessToast = false;
+                }, 1500);
+
             } catch (e) {
-                console.error("PUT Hatası:", e.message);
-                alert("Güncelleme başarısız: " + e.message);
+                alert("Güncelleme hatası: " + e.message);
             }
         },
+
         // DELETE - Seçilen kullanıcıyı ID parametresiyle veritabanından siler
         async deleteUser(u_id) {
             if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
@@ -268,39 +395,256 @@ export default {
                 console.error("DELETE Hatası:", e.message);
                 alert("Silme işlemi başarısız: " + e.message);
             }
-        }
+        },
+
+        // 1. Tablodaki "Sil" butonuna basıldığında tetiklenecek fonksiyon
+        triggerDeleteUser(userId) {
+            this.userIdToDelete = userId;
+            this.isDeleteModalOpen = true;
+            document.body.style.overflow = 'hidden'; // Arka plan kaymasını engeller
+        },
+
+        // 2. Modalı Kapatma Fonksiyonu
+        closeDeleteModal() {
+            this.isDeleteModalOpen = false;
+            this.userIdToDelete = null;
+            document.body.style.overflow = '';
+        },
+
+        // 3. Modaldaki "Evet, Sil" butonuna basıldığında backend API'ye istek atan fonksiyon
+        async confirmDeleteUser() {
+            if (!this.userIdToDelete) return;
+
+            try {
+                const res = await fetch(`${this.baseUrl}/api/users/${this.userIdToDelete}`, {
+                    method: "DELETE"
+                });
+
+                if (!res.ok) throw new Error("Sunucu kullanıcıyı silemedi.");
+
+                // Modalı hemen kapatıyoruz
+                this.isDeleteModalOpen = false;
+                document.body.style.overflow = '';
+
+                // Başarıyla Silindi Toastını Gösteriyoruz
+                this.showDeleteSuccessToast = true;
+
+                setTimeout(() => {
+                    this.showDeleteSuccessToast = false;
+                    this.userIdToDelete = null;
+                    this.getUsers(); // Tablo listesini güncellemek için mevcut get fonksiyonunu çağırıyoruz
+                }, 1500);
+
+            } catch (e) {
+                alert("Kullanıcı silinirken bir hata oluştu: " + e.message);
+                this.closeDeleteModal();
+            }
+        },
+        openEditModal(user) {
+            // Veritabanından gelen u_ ön ekli verileri, formun beklediği düz isimlere eşliyoruz
+            this.editUser = {
+                id: user.u_id,
+                firstName: user.u_firstName,
+                lastName: user.u_lastName,
+                email: user.u_email,
+                tel: user.u_tel,
+                role: String(user.u_role) // String olmasını garanti ediyoruz
+            };
+            this.isEditModalOpen = true; // Modalı açıyoruz
+        },
+
+
     }
 };
 </script>
 
 <style scoped>
+/* Güncelleme Başarı Kartı İçin Alt Çizgi Rengini Mavi Yapan Ek Sınıf */
+.fixed-top-center-toast.border-primary-subtle {
+    border-bottom: 5px solid #007bff !important;
+    /* r harfi f ile düzeltildi */
+}
+
+/* 1. Sayfanın orta-üst kısmına sabitlenmiş 250x250px net kare kartın temel yapısı */
+.fixed-top-center-toast {
+    position: fixed;
+    top: 10%;
+    /* Sayfanın en üstünden biraz aşağıda konumlanır */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Yatayda tam ortalama sağlar */
+    width: 250px !important;
+    height: 250px !important;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    box-sizing: border-box;
+    z-index: 9999;
+    /* Diğer tüm modalların üstünde açılması için */
+}
+
+/* 2. Güncelleme Başarı Kartı İçin Alt Çizgi Rengini Mavi Yapan Ek Sınıf */
+.fixed-top-center-toast.border-primary-subtle {
+    border-bottom: 5px solid #007bff !important;
+    /* Bootstrap Primary Mavisi */
+}
+
+/* 3. Toast'un yukarıdan aşağı pürüzsüzce süzülerek gelmesini sağlayan animasyon sınıfları */
+.toast-slide-enter-active {
+    transition: all 0.3s ease-out;
+}
+
+.toast-slide-leave-active {
+    transition: all 0.25s ease-in;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+    transform: translate(-50%, -20px);
+    /* Hafif yukarıdan başlar */
+    opacity: 0;
+}
+
+
 /* Modal yapısının ekranda ortalanmasını sağlayan özel CSS */
 .custom-modal-backdrop {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.4);
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1050;
 }
-.custom-modal-dialog { width: 100%; max-width: 500px; padding: 20px; }
-.custom-modal-content { background: white; display: flex; flex-direction: column; }
+
+.custom-modal-dialog {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+}
+
+.custom-modal-content {
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
 
 /* Sağ üstte çıkan şık yeşil Toast bildiriminin yerleşimi */
 .custom-toast-overlay {
     position: fixed;
-    top: 20px; right: 20px;
+    top: 20px;
+    right: 20px;
     z-index: 1100;
 }
+
 .custom-toast-card {
-    background: white; padding: 12px 20px;
-    display: flex; align-items: center; gap: 12px;
+    background: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
+
 .toast-icon-wrapper {
-    width: 24px; height: 24px;
-    display: flex; align-items: center; justify-content: center;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* KULLANICI BAŞARIYLA EKLENDİ TOASTI  */
+/* Sayfanın orta-üst kısmına sabitlenmiş 250x250px net kare kart */
+.fixed-top-center-toast {
+    position: fixed;
+    top: 15%;
+    /* Sayfanın en üstünden biraz aşağıda (orta-üst) konumlanır */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Yatayda tam ortalama sağlar */
+    width: 250px !important;
+    height: 250px !important;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    box-sizing: border-box;
+    z-index: 9999;
+    border-bottom: 5px solid #008000 !important;
+    /* Alt kısımdaki estetik yeşil bar */
+}
+
+/* İkonun kendi iç büyüme efekti */
+.toast-icon-wrapper i {
+    display: inline-block;
+    animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.4);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Arkada hiçbir gölge karartma geçişi yaratmayan, sadece kartı yukarıdan aşağı kaydıran pürüzsüz geçiş animasyonu */
+.toast-slide-enter-active {
+    transition: all 0.3s ease-out;
+}
+
+.toast-slide-leave-active {
+    transition: all 0.25s ease-in;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+    transform: translate(-50%, -20px);
+    /* Hafif yukarıdan aşağı süzülerek gelir */
+    opacity: 0;
+}
+
+
+
+/* SİLME TOASTLARI */
+.fixed-top-center-toast.border-danger-subtle {
+    border-bottom: 5px solid #dc3545 !important;
+}
+
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* İçeriği dikeyde ve yatayda merkezler */
+    z-index: 1050;
+}
 </style>
-
-
