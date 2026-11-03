@@ -1,83 +1,73 @@
-require("dotenv").config(); //env dosyamızı import ettik
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { error } = require("console");
-app.use(cors());
-const db = require("./db"); //db.js dosyamızı import ettik.
-app.use(express.json({ limit: "10mb" }));
+const db = require("./db");
 const multer = require("multer");
 const path = require("path");
-const mysql = require('mysql2');
-const fs = require('fs');
 
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
 
-//? FOTOĞRAF EKLEME
-// Ürün resimlerinin bulunduğu klasörü erişebilir yap (Mükerrer satır teke düşürüldü)
+// Ürün resimlerinin bulunduğu klasörü dışarıya aç
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// EKSİK DÜZELTİLDİ: Multer ayarları tamamlandı
+// Multer Disk Depolama Ayarları
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Proje kök dizininde "uploads" klasörü olmalı
+    cb(null, 'uploads/');
   },
-
   filename: (req, file, cb) => {
-    // Resmi atmadan önce product.id adında bir klasör açsın. Bu ürünle ilgili resimleri bu klasörde tutsun. resimlerin adları 1jpeg, 2jpeg, 3jpeg şeklinde olsun.
-    // Benzersiz dosya adı oluşturma (Örn: image1-1718293849.jpg)
     const uniqueSuffix = Date.now() + path.extname(file.originalname);
     cb(null, file.fieldname + '-' + uniqueSuffix);
   }
 });
 
-
-// Vue'dan gelecek dosya alan adlarını (image1, image2, image3) burada tanımlıyoruz
+// CRITICAL FIX: Vue dosya alan adları (p_img1, p_img2, p_img3) ile birebir eşitlendi!
 const upload = multer({ storage: storage }).fields([
-  { name: 'image1', maxCount: 1 },
-  { name: 'image2', maxCount: 1 },
-
+  { name: 'p_img1', maxCount: 1 },
+  { name: 'p_img2', maxCount: 1 },
+  { name: 'p_img3', maxCount: 1 }
 ]);
 
-// API Uç Noktası (Route) Örneği:
 
-app.post('/api/products', upload, (req, res) => {
-  // formData.name, formData.stock, formData.price, formData.desc, formData.userId, formData.image1, formData.image2
+// ADMİN.VUE 
+
+//! 1. PRODUCTS EKLE - POST
+app.post('/api/products', upload, async (req, res) => {
   try {
-    // 1. Vue'dan gelen ilk resmi (image1) p_photoway olarak ayarlıyoruz
+    const { p_name, p_stock, p_price, p_desc, u_id } = req.body;
 
-    // 2. Vue'dan gelen FormData metin içeriklerini alıyoruz
-    const { name, stock, price, desc, userId } = req.body;
+    // Resimlerin yollarını güvenli bir şekilde kontrol edip string oluşturuyoruz
+    const img1 = req.files && req.files['p_img1'] ? `/uploads/${req.files['p_img1'][0].filename}` : '';
+    const img2 = req.files && req.files['p_img2'] ? `/uploads/${req.files['p_img2'][0].filename}` : '';
+    const img3 = req.files && req.files['p_img3'] ? `/uploads/${req.files['p_img3'][0].filename}` : '';
 
-    const img1_path = `/uploads/${userId}-${name}/1.jpg`;
-    const img2_path = `/uploads/${userId}-${name}/2.jpg`;
-    const allPath = img1_path + "," + img2_path;
-    console.log(name, stock, price, desc, userId, allPath);
+    // Veritabanındaki p_photoway alanına virgülle birleşik kaydediyoruz
+    const allPath = [img1, img2, img3].filter(Boolean).join(",");
 
-
-    // 3. TAMAMEN SİZİN TABLONUZA GÖRE DÜZENLENMİŞ SQL SORGUSU
     const sql = `INSERT INTO products 
             (u_id, p_photoway, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-
-    // Gönderilecek parametre dizisi (Sıralama yukarıdaki SQL parantezi ile birebir aynı)
     const values = [
-      userId || null,     // u_id
-      allPath,            // p_photoway (Yüklenen ilk fotoğrafın sunucudaki yolu)
-      name,               // p_name
-      stock || 0,         // p_stock
-      price || 0,         // p_price
-      0,                  // p_price_disc (İndirimli fiyat - Başlangıçta 0 verdik)
-      1,                  // p_active (Ürün direkt aktif olsun diye 1 verdik)
-      desc || ''          // p_desc
+      u_id || null,
+      allPath,
+      p_name,
+      p_stock || 0,
+      p_price || 0,
+      0,
+      1,
+      p_desc || ''
     ];
 
+    // Callback veya Promise yapısına göre güvenli çalıştırma
     db.query(sql, values, (err, result) => {
       if (err) {
         console.error("SQL Sorgu Hatası:", err);
         return res.status(500).json({ error: "Veritabanı hatası: " + err.message });
       }
-      return res.status(200).json("Ürün ve fotoğraf başarıyla SQL'e kaydedildi!");
+      return res.status(200).json("Ürün ve fotoğraflar başarıyla kaydedildi!");
     });
 
   } catch (catchError) {
@@ -86,83 +76,85 @@ app.post('/api/products', upload, (req, res) => {
   }
 });
 
-// app.post('/api/products', upload, (req, res) => {
-//     // Yüklenen dosyaların yolları
-//     const img1_path = req.files['image1'] ? `/uploads/${req.files['image1'][0].filename}` : null;
-//     const img2_path = req.files['image2'] ? `/uploads/${req.files['image2'][0].filename}` : null;
-
-//     // Vue'dan gelen diğer metin verileri
-//     const { name, model, type, category, stock, price, userId } = req.body;
-
-//     // Burada SQL INSERT sorgunuzu çalıştırabilirsiniz:
-//     const sql = "INSERT INTO urunler (ad, model, resim1, resim2...) VALUES (?, ?, ?, ?...)";
-//     db.query(sql, [name, model, img1_path, img2_path, ...], ...)
-
-//     res.status(200).json({ message: "Ürün ve fotoğraflar başarıyla kaydedildi!" });
-// });
-
-
-
-//? ADMİN KISMI
-
-
-// ! PRODUCTS LİSTELE - GET - SQL SORGUSU: SELECT
+// ! PRODUCTS LİSTELE - GET - ADMIN PANELİ İÇİN
 app.get("/api/products/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const [control] = await db.query("SELECT u_role FROM users WHERE u_id=?", [id]); // gelenin rolüne bak: admin, user
-    if (control[0].u_role == 0) { // istekte bulunan adminse
-      var [rows] = await db.query("SELECT * FROM products WHERE u_id=? ORDER BY p_id ASC", [id]); // tüm ürünleri yolla
+    if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
+
+    // mysql2 kütüphanesinin promise yapısında veri her zaman ilk elemandan [rows] gelir
+    const [users] = await db.query("SELECT u_role FROM users WHERE u_id=?", [id]);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: "Kullanıcı bulunamadı." });
     }
-    else {
-      var [rows] = await db.query("SELECT * FROM products ORDER BY p_id ASC"); // kendi eklediklerini yolla
+
+    let rows;
+    // EĞER SADECE KENDİ ÜRÜNLERİNİ GÖRECEKSE (Görselde u_id'ler 0 olduğu için eşleşmeyi kontrol edin)
+    if (users[0].u_role == 0) {
+      const [result] = await db.query("SELECT * FROM products WHERE u_id=? ORDER BY p_id ASC", [id]);
+      rows = result;
+    } else {
+      const [result] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
+      rows = result;
     }
 
     res.status(200).json(rows);
   }
   catch (err) {
+    console.error("Listeleme Hatası:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-//! PRODUCTS EKLE - POST - SQL SORGUSU: INSERT INTO
+// ALTERNATİF DOĞRUDAN LİSTELEME ROTASI
+app.get("/api/allAdminProducts", async (req, res) => {
+  try {
+    // Tüm ürünleri filtre olmadan doğrudan çeker
+    const [rows] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
+    res.status(200).json(rows);
+  }
+  catch (err) {
+    console.error("allAdminProducts Hatası:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-//! PRODUCTS GÜNCELLE - PUT - SQL SORGUSU: UPDATE SET
+
+//! 3. PRODUCTS GÜNCELLE - PUT
 app.put("/api/products/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { name, stock, price, desc } = req.body;
+    const { p_name, p_stock, p_price, p_desc } = req.body;
 
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
-    if (!name || !stock || !price || !desc) return res.status(400).json({ error: "Hatalı veri geldi." });
 
     const [result] = await db.query(
       "UPDATE products SET p_name=?, p_stock=?, p_price=?, p_desc=? WHERE p_id=?",
-      [name.trim(), stock, price, desc, id]
+      [p_name, p_stock, p_price, p_desc, id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Güncellenecek kullanıcı bulunamadı." });
-    }
-    const [rows] = await db.query("SELECT * FROM products WHERE p_id=?", [id]);
-    res.status(200).json(rows[0].p_name + " adlı ürün güncellendi.");
+    res.status(200).json("Ürün başarıyla güncellendi.");
   }
   catch (err) {
+    console.error("Güncelleme Hatası:", err);
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
-//! PRODUCTS SİL DELETE - SQL SORGUSU: DELETE
+//! 4. PRODUCTS SİL - DELETE
 app.delete("/api/products/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const [result] = await db.query("DELETE FROM products WHERE p_id=?", [id]);
+    await db.query("DELETE FROM products WHERE p_id=?", [id]);
     res.status(200).json("Ürün silindi.");
   }
   catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 // post ekle.......................................................................
@@ -489,16 +481,20 @@ app.post("/api/contact", async (req, res) => {
 
 //------------------------------------------------------------------------------------------------------------
 
-//? PRODUCTS SAYFASI - ALL PRODUCTS LİSTELE - GET - SQL SORGUSU: SELECT
+//? PRODUCTS SAYFASI - ALL PRODUCTS LİSTELE - GET - KULLANICI MAĞAZASI İÇİN
 app.get("/api/productsPage", async (req, res) => {
   try {
+    // Esas dizi destructuring yapısına geri dönüyoruz ([rows])
     const [rows] = await db.query("SELECT * FROM products WHERE p_active=1 ORDER BY p_id ASC");
     res.status(200).json(rows);
   }
   catch (err) {
+    console.error("ProductsPage Hatası:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 //? CHECKOUT - POST - SQL SORGUSU: INSERT INTO
 
@@ -527,7 +523,7 @@ app.post("/api/login", async (req, res) => {
   try {
     // u_active alanını da sorguya ekledik ve TRIM kullanarak boşluk riskini sıfırladık
     const [rows] = await db.query(
-      "SELECT u_id, u_firstName, u_lastName, u_active, u_role, u_email FROM users WHERE TRIM(u_email) = ? AND u_pass = ?", 
+      "SELECT u_id, u_firstName, u_lastName, u_active, u_role, u_email FROM users WHERE TRIM(u_email) = ? AND u_pass = ?",
       [email?.trim().toLowerCase(), pass]
     );
 
@@ -551,9 +547,9 @@ app.post("/api/login", async (req, res) => {
       });
     } else {
       // Kullanıcı bulunamadığında Vue kodunun okuyabilmesi için message alanı dönüyoruz
-      res.status(200).json({ 
-        success: false, 
-        message: "E-posta adresi veya şifre hatalı!" 
+      res.status(200).json({
+        success: false,
+        message: "E-posta adresi veya şifre hatalı!"
       });
     }
   }
@@ -567,9 +563,9 @@ app.post("/api/login", async (req, res) => {
 
 //------------------------------------------------------------------------------------------------------------
 
+// Sunucu ve Port Ayarı (En İdeal Yapı)
+const PORT = process.env.PORT || 3001;
 
-
-const port = process.env.PORT
-
-const PORT = 3001;
-app.listen(PORT, () => console.log(`Backend: http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Backend: http://localhost:${PORT}`);
+});

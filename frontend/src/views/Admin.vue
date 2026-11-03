@@ -84,17 +84,20 @@
         <div class="admin-main-container d-flex flex-column justify-content-between col-12 col-md-10 offset-md-2"
             style="min-height: calc(100vh - 86px); margin-top: 80px; background-color: #ffffff; position: relative; z-index: 1;">
 
-            <!-- Üst Dinamik İçerik Alanı -->
+            <!-- Üst Dinamik İçerik Alanı (DÜZELTİLDİ: div hiyerarşisi ayrıştırıldı) -->
             <div class="w-100" style="min-height: 75vh; padding-top: 20px;">
                 <div v-if="state === 'users'">
                     <adminUsers />
+                </div>
+                
                 <div v-if="state === 'products'">
                     <adminProducts />
                 </div>
+                
                 <div v-if="state === 'orders'">
                     <adminOrders />
                 </div>
-                </div>
+                
                 <div v-if="state === 'messages'">
                     <adminMessages />
                 </div>
@@ -109,6 +112,7 @@
         </div>
     </div>
 </template>
+
 
 <script>
 import adminProducts from '@/components/admin-products.vue'
@@ -126,7 +130,7 @@ export default {
     },
     data() {
         return {
-            state: "users",
+            state: "users", // Gönderdiğiniz şablonun sekme yönetim anahtarı
             Username: sessionStorage.getItem("userName") || "Admin",
             baseUrl: "http://localhost:3001",
             activeStyle: {
@@ -145,8 +149,7 @@ export default {
                 fontSize: '12px',
                 transition: 'all 0.2s ease'
             },
-            // ... diğer mevcut verilerin
-            isEditModalOpen: false, // Güncelleme modalının açık/kapalı durumu
+            isEditModalOpen: false, 
             editUser: {
                 id: null,
                 firstName: '',
@@ -158,7 +161,7 @@ export default {
         };
     },
     mounted() {
-        // YENİLENDİ: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp tamamen gizliyoruz
+        // Admin paneline girildiğinde ana site navbar ve footer alanlarını gizliyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
 
@@ -168,7 +171,7 @@ export default {
         this.checkAdminSession();
     },
     unmounted() {
-        // YENİLENDİ: Admin panelinden çıkıldığında (Anasayfa, Ürünler vb. geçildiğinde) navbar ve footer geri gelir
+        // Admin panelinden çıkıldığında ana site elemanlarını geri getiriyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
 
@@ -187,14 +190,16 @@ export default {
         async getUsername(verifiedId) {
             try {
                 const res = await fetch(`${this.baseUrl}/api/getUsername/${verifiedId}`, {
-                    method: "POST",
+                    method: "POST", // Backend rotanız POST beklediği için aynen korundu
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id: verifiedId })
                 });
-                if (!res.ok) throw new Error("Sunucu hatası.");
+                if (!res.ok) throw new Error("Kullanıcı adı sunucudan alınamadı.");
                 const data = await res.json();
+                
                 if (data) {
-                    this.Username = data.name || data;
+                    // Backend'den dönen veri nesne ise .name alanını, düz string ise direkt kendisini alıyoruz
+                    this.Username = data.name || (typeof data === 'string' ? data : "Admin");
                     sessionStorage.setItem("userName", this.Username);
                 }
             } catch (error) {
@@ -206,14 +211,14 @@ export default {
         },
         logout() {
             sessionStorage.clear();
-            this.$router.push("/");
-            // Yedek Güvenlik: Çıkış yapıldığında navbarın anında görünür olmasını garanti eder
+            // Sayfa yönlendirmesini güvenli hale getirmek için yönlendirmeden hemen önce navbarı görünür yapıyoruz
             const mainNavbar = document.querySelector('.main-nav-container');
             if (mainNavbar) mainNavbar.style.display = '';
+            
+            this.$router.push("/");
         }
     }
 };
-
 </script>
 
 <style scoped>
