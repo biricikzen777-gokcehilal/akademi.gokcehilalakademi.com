@@ -127,8 +127,6 @@ app.post('/api/products', (req, res) => {
   });
 });
 
-
-
 // ! PRODUCTS LİSTELE - GET - ADMIN PANELİ İÇİN
 app.get("/api/products/:id", async (req, res) => {
   try {
@@ -172,7 +170,6 @@ app.get("/api/allAdminProducts", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 //! 3. PRODUCTS GÜNCELLE - PUT
 app.put("/api/products/:id", async (req, res) => {
