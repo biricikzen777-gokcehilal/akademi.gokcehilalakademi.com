@@ -124,7 +124,7 @@
                                             placeholder="Ürün detaylarını giriniz..."></textarea>
                                     </div>
 
-                                    <!-- 3 AYRI RESİM SEÇİCİ ALANI (İsimler SQL Sütunlarıyla Eşitlendi) -->
+                                    <!-- 3 AYRI RESİM SEÇİCİ ALANI (Ref Yapısı ile Kilitlenme Önleyici Güncelleme) -->
                                     <div class="col-12 border-top pt-2 mt-2">
                                         <label class="form-label text-success mb-2" style="font-weight: 500;">Ürün
                                             Görselleri (3 Resim Alanı)</label>
@@ -132,25 +132,26 @@
                                         <div class="mb-2 border border-light-subtle p-2 rounded bg-light-subtle">
                                             <label class="form-label text-muted small mb-1">Görsel 1 (Ana
                                                 Resim)*</label>
-                                            <input type="file" name="p_img1"
+                                            <input type="file" name="p_img1" ref="fileInput1"
                                                 class="form-control form-control-sm shadow-none" accept="image/*"
-                                                @change="handleImageChange($event, 1)" required />
+                                                required />
                                         </div>
 
                                         <div class="mb-2 border border-light-subtle p-2 rounded bg-light-subtle">
                                             <label class="form-label text-muted small mb-1">Görsel 2*</label>
-                                            <input type="file" name="p_img2"
+                                            <input type="file" name="p_img2" ref="fileInput2"
                                                 class="form-control form-control-sm shadow-none" accept="image/*"
-                                                @change="handleImageChange($event, 2)" required />
+                                                required />
                                         </div>
 
                                         <div class="border border-light-subtle p-2 rounded bg-light-subtle">
                                             <label class="form-label text-muted small mb-1">Görsel 3*</label>
-                                            <input type="file" name="p_img3"
+                                            <input type="file" name="p_img3" ref="fileInput3"
                                                 class="form-control form-control-sm shadow-none" accept="image/*"
-                                                @change="handleImageChange($event, 3)" required />
+                                                required />
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                             <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end gap-2"
@@ -167,19 +168,75 @@
             </div>
         </Teleport>
 
-        <!-- BAŞARILI TOAST BİLDİRİMİ -->
+        <!-- BAŞARILI TOAST BİLDİRİMİ (ZATEN VARDI) -->
         <Teleport to="body">
             <Transition name="toast-fade">
                 <div v-if="showSuccessToast" class="custom-toast-overlay">
-                    <div class="custom-toast-card border border-light-subtle rounded-2 shadow-lg">
+                    <div class="custom-toast-card border border-light-subtle rounded-4 shadow-lg">
                         <div class="toast-icon-wrapper bg-success text-white rounded-circle">
                             <i class="bi bi-check-lg"></i>
                         </div>
-                        <h6 class="m-0 text-dark" style="font-size: 14px; font-weight: 500;">Ürün Başarıyla Eklendi</h6>
+                        <h6 class="toast-text">Ürün Başarıyla Eklendi</h6>
                     </div>
                 </div>
             </Transition>
         </Teleport>
+
+        <!-- 1. ÜRÜN GÜNCELLENDİ TOAST BİLDİRİMİ -->
+        <Teleport to="body">
+            <Transition name="toast-fade">
+                <div v-if="showUpdateToast" class="custom-toast-overlay">
+                    <div class="custom-toast-card border border-light-subtle rounded-4 shadow-lg">
+                        <div class="toast-icon-wrapper bg-primary text-white rounded-circle"
+                            style="box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </div>
+                        <h6 class="toast-text">Ürün Başarıyla Güncellendi</h6>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- 2. ÜRÜN SİLİNDİ TOAST BİLDİRİMİ -->
+        <Teleport to="body">
+            <Transition name="toast-fade">
+                <div v-if="showDeleteToast" class="custom-toast-overlay">
+                    <div class="custom-toast-card border border-light-subtle rounded-4 shadow-lg">
+                        <div class="toast-icon-wrapper bg-danger text-white rounded-circle"
+                            style="box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);">
+                            <i class="bi bi-trash3"></i>
+                        </div>
+                        <h6 class="toast-text">Ürün Başarıyla Silindi</h6>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- 3. SİLME ONAY MODALI (KARE UYUMLU CONFIRM PENCERESİ) -->
+        <Teleport to="body">
+            <Transition name="toast-fade">
+                <div v-if="showConfirmModal" class="custom-toast-overlay" style="pointer-events: auto;">
+                    <div class="custom-toast-backdrop-dark" @click="cancelDelete"></div>
+                    <div class="custom-toast-card border border-light-subtle rounded-4 shadow-lg position-relative"
+                        style="z-index: 10000; height: auto; min-height: 220px; gap: 0.8rem;">
+                        <div class="toast-icon-wrapper bg-warning text-dark rounded-circle"
+                            style="box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h6 class="toast-text">Bu ürünü silmek istediğinize emin misiniz?</h6>
+                        <!-- Onay Butonları -->
+                        <div class="d-flex gap-2 w-100 mt-2">
+                            <button @click="cancelDelete" class="btn btn-sm btn-light border w-50 py-1_5 fw-semibold"
+                                style="font-size: 13px;">Vazgeç</button>
+                            <button @click="confirmDelete" class="btn btn-sm btn-danger w-50 py-1_5 fw-semibold"
+                                style="font-size: 13px;">Sil</button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+
     </div>
 </template>
 
@@ -188,23 +245,35 @@ export default {
     name: 'AdminProducts',
     data() {
         return {
+            // Modal ve Listeleme Durumları
             isModalOpen: false,
-            showSuccessToast: false,
+            products: [],
+            baseUrl: "http://localhost:3001",
+
+            // Yeni Ürün Form Verileri
             newProduct: {
                 p_name: "",
                 p_stock: 0,
                 p_price: 0,
                 p_desc: ""
             },
-            products: [],
-            baseUrl: "http://localhost:3001",
+
+            // Resim Referans Hafızası
             p_images: {
                 1: null,
                 2: null,
                 3: null
-            }
+            },
+
+            // Kare Format Yeni Bildirim (Toast) ve Silme Durumları
+            showSuccessToast: false,
+            showUpdateToast: false,
+            showDeleteToast: false,
+            showConfirmModal: false,
+            pendingDeleteId: null
         };
     },
+
     mounted() {
         this.getProducts();
     },
@@ -224,10 +293,16 @@ export default {
             const fileInputs = document.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => input.value = '');
         },
+
         handleImageChange(event, index) {
             const files = event.target.files;
-            if (!files || files.length === 0) return;
-            this.p_images[index] = files[0]; // Sadece ilk seçilen dosyayı al
+            if (!files || files.length === 0) {
+                this.p_images[index] = null;
+                return;
+            }
+            // CRITICAL FIX: files değil, dizinin İLK elemanı olan files[0] ham dosyasını alıyoruz!
+            this.p_images[index] = files[0];
+            console.log(`Görsel ${index} seçildi:`, files[0].name);
         },
 
         async getProducts() {
@@ -242,9 +317,70 @@ export default {
             }
         },
 
+        // BACKEND DEN HABER BEKLEYEN KODLAR
+        // async addProduct() {
+        //     console.log("Form tetiklendi, ürün ekleme başladı...", this.newProduct);
+        //     try {
+        //         const formData = new FormData();
+        //         formData.append("p_name", this.newProduct.p_name);
+        //         formData.append("p_stock", this.newProduct.p_stock);
+        //         formData.append("p_price", this.newProduct.p_price);
+        //         formData.append("p_desc", this.newProduct.p_desc);
+        //         formData.append("u_id", sessionStorage.getItem("userId") || "1");
 
+        //         // TAM GÜVENCE: Vue proxy nesnesini bypass edip direkt HTML input elementlerinden dosyaları çekiyoruz
+        //         const fileInputs = document.querySelectorAll('input[type="file"]');
+
+        //         fileInputs.forEach(input => {
+        //             if (input.files && input.files[0]) {
+        //                 // Input elementinin name özniteliğine göre (p_img1, p_img2, p_img3) eşleştirip ekliyoruz
+        //                 formData.append(input.name, input.files[0]);
+        //                 console.log(`${input.name} ham dosya olarak FormData'ya eklendi:`, input.files[0].name);
+        //             }
+        //         });
+
+        //         console.log("Backend'e istek gönderiliyor...");
+        //         const res = await fetch(`${this.baseUrl}/api/products`, {
+        //             method: "POST",
+        //             body: formData
+        //         });
+
+        //         console.log("Backend yanıt statüsü:", res.status);
+
+        //         if (!res.ok) {
+        //             const errorData = await res.json().catch(() => ({}));
+        //             throw new Error(errorData.error || "Sunucu ürünü veritabanına ekleyemedi.");
+        //         }
+
+        //         const responseData = await res.json();
+        //         console.log("Başarılı Sonuç:", responseData);
+
+        //         // Modalı kapat ve başarı bildirimini göster
+        //         this.isModalOpen = false;
+        //         document.body.style.overflow = '';
+        //         this.showSuccessToast = true;
+
+        //         setTimeout(() => {
+        //             this.showSuccessToast = false;
+        //             this.resetForm();
+        //             this.getProducts();
+        //         }, 3000);
+
+        //     } catch (error) {
+        //         console.error("Yakaladığımız Hata:", error);
+        //         alert("Ürün eklenirken bir hata oluştu: " + error.message);
+        //     }
+        // },
+
+        // BACKEND DEN HABER BEKLEMEYEN KODLAR
         async addProduct() {
+            console.log("Form tetiklendi, ürün ekleme başladı...", this.newProduct);
             try {
+                // HIZLANDIRMA DOKUNUŞU: Kullanıcıyı bekletmeden kare başarı toastını ANINDA açıyoruz
+                this.isModalOpen = false;
+                document.body.style.overflow = '';
+                this.showSuccessToast = true;
+
                 const formData = new FormData();
                 formData.append("p_name", this.newProduct.p_name);
                 formData.append("p_stock", this.newProduct.p_stock);
@@ -252,31 +388,44 @@ export default {
                 formData.append("p_desc", this.newProduct.p_desc);
                 formData.append("u_id", sessionStorage.getItem("userId") || "1");
 
-                if (this.p_images[1]) formData.append("p_img1", this.p_images[1]);
-                if (this.p_images[2]) formData.append("p_img2", this.p_images[2]);
-                if (this.p_images[3]) formData.append("p_img3", this.p_images[3]);
+                // Ref Yapısı üzerinden dosyaları güvenli ekliyoruz
+                if (this.$refs.fileInput1 && this.$refs.fileInput1.files) {
+                    formData.append("p_img1", this.$refs.fileInput1.files);
+                }
+                if (this.$refs.fileInput2 && this.$refs.fileInput2.files) {
+                    formData.append("p_img2", this.$refs.fileInput2.files);
+                }
+                if (this.$refs.fileInput3 && this.$refs.fileInput3.files) {
+                    formData.append("p_img3", this.$refs.fileInput3.files);
+                }
 
-                const res = await fetch(`${this.baseUrl}/api/addProductSecure`, {
+                // İstek arka planda sessizce ve güvenle akmaya devam ediyor
+                console.log("Backend'e istek arka planda gönderiliyor...");
+                const res = await fetch(`${this.baseUrl}/api/products`, {
                     method: "POST",
                     body: formData
                 });
 
-                if (!res.ok) throw new Error("Sunucu ürünü veritabanına ekleyemedi.");
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Sunucu ürünü veritabanına ekleyemedi.");
+                }
 
-                this.isModalOpen = false;
-                document.body.style.overflow = '';
-                this.showSuccessToast = true;
-
+                // Arka planda kayıt bittiğinde listeyi tazele ve formu sıfırla
                 setTimeout(() => {
                     this.showSuccessToast = false;
                     this.resetForm();
                     this.getProducts();
-                }, 3000);
+                }, 2500);
 
             } catch (error) {
-                alert("Ürün eklenirken bir hata oluştu: " + error.message);
+                // Eğer çok nadir de olsa arka planda bir hata oluşursa uyar ve toastı kapat
+                this.showSuccessToast = false;
+                console.error("Yakaladığımız Hata:", error);
+                alert("Ürün arka planda kaydedilirken bir hata oluştu: " + error.message);
             }
         },
+
         async updateProduct(p_id, p_name, p_stock, p_price, p_desc) {
             try {
                 const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, {
@@ -290,25 +439,61 @@ export default {
                     })
                 });
                 if (!res.ok) throw new Error("Güncelleme başarısız.");
-                alert("Ürün başarıyla güncellendi.");
+
+                // MAVİ KARE GÜNCELLENDİ TOASTI TETİKLENİYOR
+                this.showUpdateToast = true;
                 this.getProducts();
+
+                setTimeout(() => {
+                    this.showUpdateToast = false;
+                }, 2500);
+
             } catch (error) {
                 alert("Hata: " + error.message);
             }
         },
-        async deleteProduct(p_id) {
-            if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
+
+        // SİL BUTONUNA BASILDIĞINDA İLK BURASI ÇALIŞIR
+        deleteProduct(p_id) {
+            this.pendingDeleteId = p_id; // Silinecek ID'yi hafızaya al
+            this.showConfirmModal = true; // Kare Onay penceresini aç
+            document.body.style.overflow = 'hidden';
+        },
+
+        // KARE ONAY PENCERESİNDE "SİL" DENİRSE BURASI ÇALIŞIR
+        async confirmDelete() {
+            if (!this.pendingDeleteId) return;
             try {
-                const res = await fetch(`${this.baseUrl}/api/products/${p_id}`, {
+                const res = await fetch(`${this.baseUrl}/api/products/${this.pendingDeleteId}`, {
                     method: "DELETE"
                 });
                 if (!res.ok) throw new Error("Silme işlemi başarısız.");
-                alert("Ürün silindi.");
+
+                this.showConfirmModal = false;
+                document.body.style.overflow = '';
+
+                // KIRMIZI KARE SİLİNDİ TOASTI TETİKLENİYOR
+                this.showDeleteToast = true;
                 this.getProducts();
+
+                setTimeout(() => {
+                    this.showDeleteToast = false;
+                    this.pendingDeleteId = null;
+                }, 2500);
+
             } catch (error) {
-                console.error(error);
+                alert("Hata: " + error.message);
+                this.cancelDelete();
             }
-        }
+        },
+
+        // KARE ONAY PENCERESİNDE "VAZGEÇ" DENİRSE BURASI ÇALIŞIR
+        cancelDelete() {
+            this.showConfirmModal = false;
+            this.pendingDeleteId = null;
+            document.body.style.overflow = '';
+        },
+
     }
 };
 </script>
@@ -344,6 +529,8 @@ export default {
     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15) !important;
 }
 
+
+
 .custom-toast-overlay {
     position: fixed;
     top: 0;
@@ -360,7 +547,7 @@ export default {
 
 .custom-toast-card {
     background: #ffffff;
-    padding: 20px 35px;
+    padding: 30px 35px;
     display: flex;
     flex-direction: column;
     align-items: center;

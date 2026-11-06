@@ -6,24 +6,62 @@ const db = require("./db");
 const multer = require("multer");
 const path = require("path");
 
+const fs = require('fs'); // Klasör oluşturabilmek için en üste ekleyin (eğer yoksa)
+
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // Ürün resimlerinin bulunduğu klasörü dışarıya aç
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Multer Disk Depolama Ayarları
+// Türkçe karakterleri temizleyip klasör dostu (slug) yapan fonksiyon
+function convertToSlug(text) {
+  if (!text) return 'urun';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')         // Boşlukları - yap
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u')
+    .replace(/ş/g, 's').replace(/ı/g, 'i')
+    .replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/[^a-z0-9\-]/g, '')  // Sadece harf, sayı ve - bırak
+    .replace(/-+/g, '-');         // Yan yana tireleri teke indir
+}
+
+
+// DİNAMİK DİSK DEPOLAMA AYARLARI
+// GÜVENLİ VE KİLİTLENMEYEN MULTER AYARLARI
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    // Kilitlenmeyi önlemek için öncelikle ana uploads klasörünün varlığını garanti ediyoruz
+    const baseUploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(baseUploadDir)) {
+      fs.mkdirSync(baseUploadDir, { recursive: true });
+    }
+
+    // req.body.p_name gelene kadar kilitlenmeyi önlemek adına geçici veya kalıcı adlandırma
+    const productName = req.body.p_name || 'yeni-urun';
+    const folderSlug = convertToSlug(productName);
+    const uploadPath = path.join(baseUploadDir, folderSlug);
+
+    // Klasörü asenkron veya güvenli senkron blokta oluşturuyoruz
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix);
+    // p_img1 -> img1, p_img2 -> img2, p_img3 -> img3
+    const cleanFieldName = file.fieldname.replace('p_', '');
+    const ext = path.extname(file.originalname);
+
+    // Aynı isimde dosya çakışmalarını engellemek için benzersiz bir timestamp ekliyoruz
+    cb(null, `${cleanFieldName}-${Date.now()}${ext}`);
   }
 });
 
-// CRITICAL FIX: Vue dosya alan adları (p_img1, p_img2, p_img3) ile birebir eşitlendi!
 const upload = multer({ storage: storage }).fields([
   { name: 'p_img1', maxCount: 1 },
   { name: 'p_img2', maxCount: 1 },
@@ -33,48 +71,63 @@ const upload = multer({ storage: storage }).fields([
 
 // ADMİN.VUE 
 
-//! 1. PRODUCTS EKLE - POST
-app.post('/api/products', upload, async (req, res) => {
-  try {
-    const { p_name, p_stock, p_price, p_desc, u_id } = req.body;
 
-    // Resimlerin yollarını güvenli bir şekilde kontrol edip string oluşturuyoruz
-    const img1 = req.files && req.files['p_img1'] ? `/uploads/${req.files['p_img1'][0].filename}` : '';
-    const img2 = req.files && req.files['p_img2'] ? `/uploads/${req.files['p_img2'][0].filename}` : '';
-    const img3 = req.files && req.files['p_img3'] ? `/uploads/${req.files['p_img3'][0].filename}` : '';
+//! 1. PRODUCTS EKLE - POST (PROMISE YAPISI İLE TAM UYUMLU KESİN ÇÖZÜM)
+app.post('/api/products', (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error("Multer Yükleme Hatası:", err);
+      return res.status(500).json({ error: "Resimler yüklenirken hata oluştu: " + err.message });
+    }
 
-    // Veritabanındaki p_photoway alanına virgülle birleşik kaydediyoruz
-    const allPath = [img1, img2, img3].filter(Boolean).join(",");
+    try {
+      const { p_name, p_stock, p_price, p_desc, u_id } = req.body;
+      
+      const cleanName = p_name ? p_name.trim() : 'Yeni Urun';
+      const folderSlug = convertToSlug(cleanName);
 
-    const sql = `INSERT INTO products 
-            (u_id, p_photoway, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+            // Her bir resmin gerçekten yüklenip yüklenmediğini ismini (filename) kontrol ederek alıyoruz
+      const img1 = req.files && req.files['p_img1'] && req.files['p_img1'][0] ? `/uploads/${folderSlug}/${req.files['p_img1'][0].filename}` : null;
+      const img2 = req.files && req.files['p_img2'] && req.files['p_img2'][0] ? `/uploads/${folderSlug}/${req.files['p_img2'][0].filename}` : null;
+      const img3 = req.files && req.files['p_img3'] && req.files['p_img3'][0] ? `/uploads/${folderSlug}/${req.files['p_img3'][0].filename}` : null;
 
-    const values = [
-      u_id || null,
-      allPath,
-      p_name,
-      p_stock || 0,
-      p_price || 0,
-      0,
-      1,
-      p_desc || ''
-    ];
+      const sql = `INSERT INTO products 
+              (u_id, p_img1, p_img2, p_img3, p_name, p_stock, p_price, p_price_disc, p_active, p_desc) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    // Callback veya Promise yapısına göre güvenli çalıştırma
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error("SQL Sorgu Hatası:", err);
-        return res.status(500).json({ error: "Veritabanı hatası: " + err.message });
-      }
-      return res.status(200).json("Ürün ve fotoğraflar başarıyla kaydedildi!");
-    });
+      const safeUserId = u_id && !isNaN(u_id) ? parseInt(u_id, 10) : null;
+      const safeStock = p_stock && !isNaN(p_stock) ? parseInt(p_stock, 10) : 0;
+      const safePrice = p_price && !isNaN(p_price) ? parseFloat(p_price) : 0;
 
-  } catch (catchError) {
-    console.error("Sunucu Genel Hatası:", catchError);
-    return res.status(500).json({ error: catchError.message });
-  }
+      const values = [
+        safeUserId,
+        img1,
+        img2,
+        img3,
+        cleanName,
+        safeStock,
+        safePrice,
+        0,
+        1,
+        p_desc ? p_desc.trim() : ''
+      ];
+
+      console.log("SQL Sorgusu veritabanına gönderiliyor...");
+
+      // CRITICAL FIX: Callback yerine projenizdeki gibi await kullanarak söz dizimini eşitliyoruz
+      const [result] = await db.query(sql, values);
+      
+      console.log("✅ ÜRÜN VERİTABANINA BAŞARIYLA YAZILDI! Yeni ID:", result.insertId);
+      return res.status(200).json({ message: "Ürün ve fotoğraflar başarıyla kaydedildi!", id: result.insertId });
+
+    } catch (dbError) {
+      console.error("🚨 SORGURDA YA DA VERİTABANINDA HATA OLUŞTU:", dbError.message);
+      return res.status(500).json({ error: "Veritabanı kayıt hatası: " + dbError.message });
+    }
+  });
 });
+
+
 
 // ! PRODUCTS LİSTELE - GET - ADMIN PANELİ İÇİN
 app.get("/api/products/:id", async (req, res) => {
@@ -158,6 +211,7 @@ app.delete("/api/products/:id", async (req, res) => {
 
 
 // post ekle.......................................................................
+
 //? POST - Yeni mesaj ekle (İletişim Formundan Gelen Veriyi Kaydeder)
 app.post("/api/messages", (req, res) => {
   try {
@@ -245,7 +299,6 @@ app.delete("/api/messages/:id", async (req, res) => {
 
 
 
-
 // ! ORDERS LİSTELE - GET - SQL SORGUSU: SELECT
 app.get("/api/orders", async (req, res) => {
   try {
@@ -314,8 +367,6 @@ app.delete("/api/orders/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 
 
@@ -390,7 +441,6 @@ app.put("/api/users/:id", async (req, res) => {
   }
 });
 
-
 app.put("/api/users/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -422,7 +472,6 @@ app.put("/api/users/:id", async (req, res) => {
   }
 });
 
-
 //! USERS SİL DELETE - SQL SORGUSU: DELETE
 app.delete("/api/users/:id", async (req, res) => {
   try {
@@ -437,29 +486,24 @@ app.delete("/api/users/:id", async (req, res) => {
 
 
 
-
 //-------------------------------------------------------------------------------------------------------------
 
 
 
-//? ADMİN PAGE - USERNAME
-app.post("/api/getUsername", async (req, res) => {
-  const { id } = req.body;
+//? PRODUCTS SAYFASI - ALL PRODUCTS LİSTELE - GET - KULLANICI MAĞAZASI İÇİN
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Resimlerin URL üzerinden açılabilmesi için bu satır sunucuda mutlaka olmalı
+
+app.get("/api/productsPage", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT u_firstName FROM users WHERE u_id=?", [id]);
-
-    if (rows)
-      return res.status(200).json(rows[0].u_firstName);
-
-    else
-      res.status(404).json({ error: "Kullanıcı bulunamadı." });
+    // Aktif olan tüm ürünleri p_img1, p_img2, p_img3 verileriyle birlikte doğrudan çeker
+    const [rows] = await db.query("SELECT * FROM products WHERE p_active=1 ORDER BY p_id ASC");
+    res.status(200).json(rows);
   }
   catch (err) {
+    console.error("ProductsPage Hatası:", err.message);
     res.status(500).json({ error: err.message });
-    alert("Giriş başarısız.")
   }
 });
-
 
 //? CONTACT MESSAGE - POST - SQL SORGUSU: INSERT INTO
 app.post("/api/contact", async (req, res) => {
@@ -484,9 +528,21 @@ app.post("/api/contact", async (req, res) => {
 //? PRODUCTS SAYFASI - ALL PRODUCTS LİSTELE - GET - KULLANICI MAĞAZASI İÇİN
 app.get("/api/productsPage", async (req, res) => {
   try {
-    // Esas dizi destructuring yapısına geri dönüyoruz ([rows])
+    // Aktif olan tüm ürünleri 3 resmiyle birlikte çeker
     const [rows] = await db.query("SELECT * FROM products WHERE p_active=1 ORDER BY p_id ASC");
-    res.status(200).json(rows);
+
+    /* 
+      💡 ÖNEMLİ İPUCU: 
+      Eğer sitenin ön yüzü (mağaza kısmı) tek bir "p_image" veya "p_photoway" alanı bekliyorsa, 
+      aşağıdaki gibi döngüyle diziyi güncelleyerek frontend'i bozmadan uyumlu hale getirebilirsin:
+    */
+    const mappedRows = rows.map(product => ({
+      ...product,
+      // Eğer ön yüz "p_image" sütununu arıyorsa otomatik olarak p_img1'i (ana resmi) ona ata
+      p_image: product.p_image || product.p_img1
+    }));
+
+    res.status(200).json(mappedRows);
   }
   catch (err) {
     console.error("ProductsPage Hatası:", err.message);
@@ -494,6 +550,31 @@ app.get("/api/productsPage", async (req, res) => {
   }
 });
 
+
+//? 5. KULLANICI ADI GETİR - POST (Admin Panelindeki Hatayı Çözer)
+app.post('/api/getUsername', async (req, res) => {
+  try {
+    const { u_id } = req.body; // Veya frontend'den nasıl gönderiyorsanız
+    if (!u_id) {
+      return res.status(400).json({ error: "Kullanıcı ID gönderilmedi." });
+    }
+
+    // Veritabanından kullanıcının adını ve soyadını çekiyoruz
+    const [rows] = await db.query("SELECT u_name, u_surname FROM users WHERE u_id = ?", [u_id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: "Kullanıcı bulunamadı." });
+    }
+
+    // Frontend'in Admin.vue dosyasında beklediği şekilde veriyi dönüyoruz
+    res.status(200).json({
+      username: `${rows[0].u_name} ${rows[0].u_surname}`
+    });
+  } catch (err) {
+    console.error("getUsername Hatası:", err.message);
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
 
 
 //? CHECKOUT - POST - SQL SORGUSU: INSERT INTO
