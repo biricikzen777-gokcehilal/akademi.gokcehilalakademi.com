@@ -388,15 +388,20 @@ export default {
                 formData.append("u_id", sessionStorage.getItem("userId") || "1");
 
                 // Ref Yapısı üzerinden dosyaları güvenli ekliyoruz
-                if (this.$refs.fileInput1 && this.$refs.fileInput1.files) {
-                    formData.append("p_img1", this.$refs.fileInput1.files);
+                // TAM DÜZELTME: input.files nesnesinin sonuna [0] ekleyerek ham dosyayı yakalıyoruz
+                if (this.$refs.fileInput1 && this.$refs.fileInput1.files && this.$refs.fileInput1.files[0]) {
+                    formData.append("p_img1", this.$refs.fileInput1.files[0]);
+                    console.log("Görsel 1 FormData'ya eklendi:", this.$refs.fileInput1.files[0].name);
                 }
-                if (this.$refs.fileInput2 && this.$refs.fileInput2.files) {
-                    formData.append("p_img2", this.$refs.fileInput2.files);
+                if (this.$refs.fileInput2 && this.$refs.fileInput2.files && this.$refs.fileInput2.files[0]) {
+                    formData.append("p_img2", this.$refs.fileInput2.files[0]);
+                    console.log("Görsel 2 FormData'ya eklendi:", this.$refs.fileInput2.files[0].name);
                 }
-                if (this.$refs.fileInput3 && this.$refs.fileInput3.files) {
-                    formData.append("p_img3", this.$refs.fileInput3.files);
+                if (this.$refs.fileInput3 && this.$refs.fileInput3.files && this.$refs.fileInput3.files[0]) {
+                    formData.append("p_img3", this.$refs.fileInput3.files[0]);
+                    console.log("Görsel 3 FormData'ya eklendi:", this.$refs.fileInput3.files[0].name);
                 }
+
 
                 // İstek arka planda sessizce ve güvenle akmaya devam ediyor
                 console.log("Backend'e istek arka planda gönderiliyor...");

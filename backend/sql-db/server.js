@@ -12,7 +12,10 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // Ürün resimlerinin bulunduğu klasörü dışarıya aç
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// YENİ HALİ (Klasör yapınıza tam uyumlu):
+app.use("/uploads", express.static(path.join(__dirname, "sql-db", "uploads")));
+
 
 // Türkçe karakterleri temizleyip klasör dostu (slug) yapan fonksiyon
 function convertToSlug(text) {
@@ -86,7 +89,8 @@ app.post('/api/products', (req, res) => {
       const cleanName = p_name ? p_name.trim() : 'Yeni Urun';
       const folderSlug = convertToSlug(cleanName);
 
-            // Her bir resmin gerçekten yüklenip yüklenmediğini ismini (filename) kontrol ederek alıyoruz
+    
+      // Her bir nesnenin ilk elemanına [0] ile eriştiğimizden emin oluyoruz
       const img1 = req.files && req.files['p_img1'] && req.files['p_img1'][0] ? `/uploads/${folderSlug}/${req.files['p_img1'][0].filename}` : null;
       const img2 = req.files && req.files['p_img2'] && req.files['p_img2'][0] ? `/uploads/${folderSlug}/${req.files['p_img2'][0].filename}` : null;
       const img3 = req.files && req.files['p_img3'] && req.files['p_img3'][0] ? `/uploads/${folderSlug}/${req.files['p_img3'][0].filename}` : null;
