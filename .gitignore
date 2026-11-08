@@ -12,5 +12,3 @@ yarn-error.log*
 
 # SQL yerel veritabanı logları veya yedekleri (İsteğe bağlı)
 frontend/src/assets/img/
-
-"frontend/src/assets/img/" 

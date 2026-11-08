@@ -282,9 +282,35 @@ import axios from 'axios';
             <Sepet @close-sepet="isSepetOpen = false" />
         </div>
 
+        <!-- Sitenizin tüm alt sayfalarını (Mağaza, Hakkımda, İletişim vb.) ekrana basar -->
         <RouterView />
     </div>
 
+    <!-- LÜKS KOYU PEMBE KARE SEPETE EKLENDİ TOAST BİLDİRİM KATMANI -->
+    <Teleport to="body">
+        <Transition name="toast-fade">
+            <div v-if="showCartToast" class="custom-cart-toast-overlay">
+                <!-- 200x200 Kare Format, İkon Üstte, Yazı Altta Düzen -->
+                <div
+                    class="custom-cart-toast-card border border-light-subtle rounded-4 shadow-lg d-flex flex-column align-items-center justify-content-center gap-3 bg-white p-3">
+
+                    <!-- Üstteki Büyük Onay İkon Çemberi (Sitenizin Koyu Pembe Lotus Tonu #C71585) -->
+                    <div class="cart-toast-icon-wrapper rounded-circle d-flex align-items-center justify-content-center bg-transparent"
+                        style="width: 60px; height: 60px; background-color: #C71585 !important; box-shadow: 0 8px 20px rgba(199, 21, 133, 0.3);">
+                        <!-- Büyütülmüş Çanta İkonu -->
+                        <i class="bi bi-bag-check-fill text-white" style="font-size: 1.8rem; line-height: 1;"></i>
+                    </div>
+
+                    <!-- Alttaki Net İki Satırlı Kurumsal Yazı -->
+                    <h6 class="cart-toast-text m-0 text-dark fw-semibold text-center"
+                        style="font-size: 14px; line-height: 1.4; letter-spacing: -0.2px;">
+                        Ürün Sepetinize<br>Başarıyla Eklendi
+                    </h6>
+
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
 
     <!-- ! FOOTER -->
     <footer class="container-fluid w-100 px-0 py-5 text-white border-top border-white border-opacity-10"
@@ -419,52 +445,63 @@ export default {
     data() {
         return {
             name: 'App',
-            // Sepetin açık/kapalı olma durumunu tutan yeni değişken
+            // Sepetin açık/kapalı olma durumunu tutan değişken
             isSepetOpen: true,
 
             nav_search: "",
             showSuccessToast: false,
-            sepet: reactive([
-                { name: "aaaa", stock: 40, price: 100 },
-                { name: "bbbb", stock: 40, price: 200 },
-                { name: "ccc", stock: 40, price: 300 },
-                { name: "ddd", stock: 40, price: 400 }
-            ]),
+
+            // Sepetiniz artık sıfırdan tamamen temiz ve boş başlıyor!
+            sepet: [],
+
+            // KESİN DÜZELTME: Şablonunuzla tam uyumlu orijinal dizi yapısına geri döndük!
             user: [
                 { firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: false }
             ],
+
             loginUser: { email: '', pass: '', check: false },
             errors: { firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: '', general: '' },
             selectedRole: 'user',
             showLoginToast: false,
             loggedInUserName: '',
-            baseUrl: 'http://localhost:5000',
+            baseUrl: 'http://localhost:3001', // Backend portunuz olan 3001 ile eşitlendi
+
+            showCartToast: false // Koyu pembe kurumsal sepet toast tetikleyicisi
         }
     },
+
     watch: {
         // Rota her değiştiğinde bu fonksiyon çalışır
         $route(to) {
             // Eğer kullanıcı checkout (ödeme) sayfasına gittiyse sepeti kapat
             if (to.path === '/checkout') {
                 this.isSepetOpen = false;
+            } else {
+                // Diğer sayfalarda sepetin genel izlenebilirliğini korur
+                this.isSepetOpen = true;
             }
         }
     },
 
-
-    mounted() {
-
+      mounted() {
+        // KESİN ÇÖZÜM: addCart fonksiyonunu direkt tarayıcının ana hafızasına (window) kilitliyoruz.
+        // Böylece projenin neresinde olursa olsun bu fonksiyon .bind(this) korumasıyla tetiklenebilecek!
+        window.küreselSepeteEkle = this.addCart.bind(this);
+        console.log("🚀 Küresel sepet tetikleyicisi tarayıcı hafızasına mühürlendi.");
     },
+
 
     provide() {
         return {
+            // Sepet dizisini alt bileşenlere (Product.vue ve sepet.vue) reaktif olarak dağıtır
             sepet: this.sepet
         }
     },
 
     computed: {
-
+        // Computed metotlar ihtiyaç halinde buraya tanımlanacaktır
     },
+
 
     methods: {
         // 1. ŞİFRE EŞLEŞME KONTROLÜ (HTML'deki user.pass kök bağına göre eşitlendi)
@@ -767,12 +804,49 @@ export default {
             // this.nav_search = "";
         },
 
-
         logout() {
             sessionStorage.clear();
             this.$router.push("/");
             window.location.reload(); // Değişikliklerin arayüze anında yansıması için sayfayı yeniler
         },
+
+        // Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
+        addCart(product) {
+            console.log("=== ASIL APP.VUE TETİKLENDİ ===", product);
+
+            if (!product) {
+                console.warn("Sepete eklenmek istenen ürün verisi boş geldi.");
+                return;
+            }
+
+            // Gelen nesneden verileri yakalayıp sepet dizisine push ediyoruz
+            this.sepet.push({
+                name: product.p_name || product.name || "Bilinmeyen Ürün",
+                price: Number(product.p_price || product.price || 0)
+            });
+
+            // BİLDİRİMİ TETİKLE: Pembe başarı karesini anında true yaparak ekrana fırlatıyoruz!
+            this.showCartToast = true;
+            console.log("showCartToast durumu aktif edildi:", this.showCartToast);
+
+            // Bildirimi 2.5 saniye sonra ekrandan zarifçe kaldırır
+            setTimeout(() => {
+                this.showCartToast = false;
+                console.log("showCartToast durumu kapatildi.");
+            }, 2500);
+        },
+
+        provide() {
+            return {
+                // Sepet dizisini alt bileşenlere reaktif dağıtır
+                sepet: this.sepet,
+
+                // KESİN DÜZELTME: Çakışmayı önlemek için ismini 'globalAddCart' yaptık ve .bind(this) ile kilitledik
+                globalAddCart: this.addCart.bind(this)
+            }
+        },
+
+
     }
 };
 
@@ -817,7 +891,6 @@ export default {
     font-size: 16px !important;
     /* İstediğiniz gibi yazı boyutu büyütüldü */
     font-weight: 400 !important;
-    /* Başlangıç font ağırlığı fw-medium (500) yapıldı */
     color: #2b2b2b !important;
     text-decoration: none;
     letter-spacing: 0.3px;
@@ -826,7 +899,7 @@ export default {
     transition: color 0.2s ease-in-out, font-weight 0.2s ease-in-out;
 }
 
-/* DÜZELTİLDİ: Mouse ile üzerine gelindiğinde veya aktifken font-weight artar (600) ve yeşil olur */
+/* Mouse ile üzerine gelindiğinde veya aktifken font-weight artar ve yeşil olur */
 .nav-link-item:hover,
 .router-link-active.nav-link-item {
     color: #008000 !important;
@@ -851,7 +924,6 @@ export default {
 /* Onay kutusunun dış çerçevesi ve tıklandığında içi tam yeşil olur */
 .form-check-input:checked {
     background-color: #198754 !important;
-    /* Tam yeşil renk */
     border-color: #198754 !important;
 }
 
@@ -909,19 +981,20 @@ export default {
     box-shadow: 0 4px 10px rgba(0, 128, 0, 0.15);
 }
 
-
+/* ==========================================================================
+   4. SEPET SIDEBAR PANEL YERLEŞİMİ
+   ========================================================================== */
 .sepetsidebar {
     position: fixed;
     right: 20px;
     height: 100vh;
-    /* Ekranın en yukarısından en aşağısına kadar kaplar */
-
-
-    /* EN ÖNE GETİREN SİHİRLİ DOKUNUŞ */
     z-index: 9999 !important;
+    /* En öne getiren sihirli dokunuş */
 }
 
-/* Ekranı Kaplayan Şeffaf Katman (Tıklamaları engellemek için) */
+/* ==========================================================================
+   5. BAŞARILI KAYIT BİLDİRİM PENCERESİ
+   ========================================================================== */
 .success-toast-overlay {
     position: fixed;
     top: 0;
@@ -933,11 +1006,10 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
-    /* Her şeyin üstünde görünmesi için */
+    z-index: 99999;
+    /* Katman düzeyi artırıldı */
 }
 
-/* Ortadaki Kare Kart */
 .success-toast-card {
     background-color: white;
     padding: 30px;
@@ -947,13 +1019,11 @@ export default {
     height: 220px;
     display: flex;
     flex-direction: column;
-    /* Doğru hizalama komutu budur */
     justify-content: center;
     align-items: center;
     text-align: center;
 }
 
-/* Yeşil Yuvarlak İkon Alanı */
 .success-icon-circle {
     width: 80px;
     height: 80px;
@@ -966,7 +1036,7 @@ export default {
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
-/* Vue Yumuşak Geçiş (Animation) Efektleri */
+/* Kayıt Bildirimi Animasyon Geçiş Efektleri */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
     transition: all 0.3s ease;
@@ -982,12 +1052,78 @@ export default {
     color: #ffffff !important;
     text-decoration: underline !important;
     opacity: 0.85;
-    /* Hafif bir etkileşim hissi verir */
 }
 
-/* İkonun üzerine gelindiğinde (hover) tam 33px boyutuna (1.1 katına) büyümesini sağlar */
 .admin-social-links a:hover {
     transform: scale(1.2);
     opacity: 0.95;
+}
+
+/* ==========================================================================
+   6. 🌸 LÜKS KOYU PEMBE SEPETE EKLENDİ TOAST BİLDİRİM STİLLERİ
+/* ==========================================================================
+   🌸 LÜKS KOYU PEMBE SEPETE EKLENDİ TOAST BİLDİRİM STİLLERİ
+   ========================================================================== */
+.custom-cart-toast-overlay {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 999999 !important;
+    /* Katman düzeyi en üst seviyeye kilitlendi */
+    pointer-events: none;
+}
+
+/* 200x200 Tam Kare Kurumsal Başarı Kartı */
+.custom-cart-toast-card {
+    background-color: #ffffff !important;
+    width: 200px !important;
+    height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1.25rem !important;
+    padding: 1.5rem !important;
+    pointer-events: auto;
+    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* İkon Çemberi - Sitenizin Kurumsal Koyu Pembe Tonu (#C71585) */
+.cart-toast-icon-wrapper {
+    width: 60px !important;
+    height: 60px !important;
+    background-color: #C71585 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 8px 20px rgba(199, 21, 133, 0.3) !important;
+}
+
+.cart-toast-icon-wrapper i {
+    font-size: 1.8rem !important;
+    line-height: 1 !important;
+}
+
+.cart-toast-text {
+    margin: 0 !important;
+    color: #212529 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    line-height: 1.4 !important;
+    letter-spacing: -0.2px !important;
+}
+
+/* Pembe Sepet Toast Bildiriminin Merkezden Arkadan Öne Doğru Elastik Büyüme Animasyonu */
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.toast-fade-enter-from,
+.toast-fade-leave-to {
+    opacity: 0 !important;
+    transform: translate(-50%, -50%) scale(0.8) !important;
 }
 </style>

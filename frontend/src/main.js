@@ -10,6 +10,13 @@ import router from './router' //! Sayfalar veya componentler arasındaki yönlen
 
 const app = createApp(App) //! App.vue'yu ana vue olarak tanıttık.
 
+// main.js dosyanızın alt kısmını şu şekilde güncelleyin:
+import { reactive } from 'vue' // reactive modülünü üste ekleyin (eğer yoksa)
+
+// GÜVENLİ KÜRESEL SEPET: Sepet artık %100 boş ve temiz bir dizi olarak başlıyor!
+const sepetDurumu = reactive([])
+app.provide('sepet', sepetDurumu)
+
 app.use(router) //! Vue projemize router ı dahil ettik.
 
 app.mount('#app') //! tüm ayarları yani app'i  #app'e monte ettik. # = id demek.

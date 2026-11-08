@@ -45,7 +45,7 @@
                                     {{ product.p_price }}₺
                                 </span>
                                 <span class="text-muted" style="font-size: 11px;">Stok: <b>{{ product.p_stock
-                                        }}</b></span>
+                                }}</b></span>
                             </div>
 
                             <!-- Yuvarlatılmış Köşeli Sepet Butonu (Radius: 5px) -->
@@ -119,20 +119,27 @@ export default {
                 console.error("Veri tabanından ürünler çekilemedi:", e.message);
             }
         },
+
         addCart(id) {
             if (!this.products) return;
+
             const secilenUrun = this.products.find(p => p.p_id == id);
+
             if (secilenUrun) {
-                this.sepet.push({
-                    name: secilenUrun.p_name,
-                    price: Number(secilenUrun.p_price),
-                    stock: secilenUrun.p_stock
-                });
-                alert(`${secilenUrun.p_name} sepetinize başarıyla eklendi.`);
+                console.log("Ürün bulundu, tarayıcı ana hafızasındaki metoda uçuruluyor:", secilenUrun);
+
+                // KESİN ÇÖZÜM: Tüm Vue bağları ve hataları bypass edildi, tarayıcı belleğindeki fonksiyon doğrudan tetiklendi!
+                if (window.küreselSepeteEkle) {
+                    window.küreselSepeteEkle(secilenUrun);
+                } else {
+                    console.error("Küresel sepet fonksiyonu hafızada bulunamadı!");
+                }
             }
         }
+
     }
 };
+
 </script>
 
 
@@ -141,14 +148,16 @@ export default {
 .dikey-format-img {
     width: 100%;
     height: 100%;
-    object-fit: contain; 
+    object-fit: contain;
     object-position: center;
-    border-radius: 12px !important; /* Fotoğraf köşeleri tam 15px yapıldı */
+    border-radius: 12px !important;
+    /* Fotoğraf köşeleri tam 15px yapıldı */
 }
 
 /* Ürün Kartının Genel Ayarları */
 .custom-product-card {
-    border-radius: 12px !important; /* Kartın dış köşeleri de 15px yapıldı */
+    border-radius: 12px !important;
+    /* Kartın dış köşeleri de 15px yapıldı */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -157,8 +166,6 @@ export default {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06) !important;
 }
-
-
 
 
 .btn-kibar-yesil {

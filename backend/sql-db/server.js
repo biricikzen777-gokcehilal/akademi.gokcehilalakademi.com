@@ -16,7 +16,6 @@ app.use(express.json({ limit: "10mb" }));
 // YENİ HALİ (Klasör yapınıza tam uyumlu):
 app.use("/uploads", express.static(path.join(__dirname, "sql-db", "uploads")));
 
-
 // Türkçe karakterleri temizleyip klasör dostu (slug) yapan fonksiyon
 function convertToSlug(text) {
   if (!text) return 'urun';
@@ -31,7 +30,6 @@ function convertToSlug(text) {
     .replace(/[^a-z0-9\-]/g, '')  // Sadece harf, sayı ve - bırak
     .replace(/-+/g, '-');         // Yan yana tireleri teke indir
 }
-
 
 // DİNAMİK DİSK DEPOLAMA AYARLARI
 // GÜVENLİ VE KİLİTLENMEYEN MULTER AYARLARI
@@ -72,8 +70,8 @@ const upload = multer({ storage: storage }).fields([
 ]);
 
 
-// ADMİN.VUE 
 
+// ADMİN.VUE 
 
 //! 1. PRODUCTS EKLE - POST (PROMISE YAPISI İLE TAM UYUMLU KESİN ÇÖZÜM)
 app.post('/api/products', (req, res) => {
@@ -210,25 +208,22 @@ app.delete("/api/products/:id", async (req, res) => {
 
 
 
-
-// post ekle.......................................................................
-
-//? POST - Yeni mesaj ekle (İletişim Formundan Gelen Veriyi Kaydeder)
-app.post("/api/messages", (req, res) => {
+//? POST - Yeni mesaj ekle (İletişim Formundan Gelen Veriyi Güvenle Kaydeder)
+app.post("/api/messages", async (req, res) => {
   try {
     const { firstName, lastName, email, code, tel, subject, message } = req.body;
 
     if (!firstName || !lastName || !email || !message) {
-      return res.status(400).json("Gerekli alanlar eksik geldi.");
+      return res.status(400).json({ error: "Gerekli alanlar eksik geldi." });
     }
 
     const combinedPhone = code ? `${code} ${tel}` : tel;
 
     const query = `
-            INSERT INTO messages 
-            (m_firstName, m_lastName, m_email, m_tel, m_subject, m_message) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
+      INSERT INTO messages 
+      (m_firstName, m_lastName, m_email, m_tel, m_subject, m_message) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
 
     const values = [
       firstName.trim(),
@@ -238,19 +233,16 @@ app.post("/api/messages", (req, res) => {
       subject ? subject.trim() : "Teşekkür",
       message.trim()
     ];
-    res.status(201).json("Mesaj başarıyla iletildi.");
 
-    // db.query(query, values, (err, result) => {
-    //     if (err) {
-    //         console.error("❌ MySQL INSERT Message Hatası Detayı:", err.message);
-    //         // Detaylı hatayı terminalde görebilmek için mutlaka buraya log ekledik
-    //         return res.status(500).json({ error: err.message });
-    //     }
-    //     res.status(201).json("Mesaj başarıyla iletildi.");
-    // });
+    // DÜZELTME: Yorum satırları kaldırıldı ve asenkron (await) yapısına uyarlandı
+    const [result] = await db.query(query, values);
+    
+    console.log("✅ Yeni mesaj veritabanına kaydedildi! ID:", result.insertId);
+    return res.status(201).json({ message: "Mesaj başarıyla iletildi.", id: result.insertId });
+
   } catch (e) {
-    console.error("Sistemsel Mesaj Kayıt Hatası:", e.message);
-    res.status(500).json("Sunucu Hatası");
+    console.error("🚨 Sistemsel Mesaj Kayıt Hatası:", e.message);
+    return res.status(500).json({ error: "Sunucu Hatası: " + e.message });
   }
 });
 
@@ -258,10 +250,11 @@ app.post("/api/messages", (req, res) => {
 app.get("/api/messages", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM messages ORDER BY m_id DESC");
-    res.status(200).json(rows);
+    return res.status(200).json(rows);
   }
   catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🚨 Mesaj Listeleme Hatası:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -272,31 +265,44 @@ app.put("/api/messages/:id", async (req, res) => {
     const { status } = req.body;
 
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
-    if (!status) json({ error: "Hatalı veri geldi." });
+    
+    // DÜZELTME: json() çökme hatası engellendi, res.status yapısına alındı
+    if (status === undefined || status === null) {
+      return res.status(400).json({ error: "Hatalı veri geldi. Durum bilgisi eksik." });
+    }
 
+    // DÜZELTME: SQL syntax hatasına sebep olan eksik eşittir (=) işareti eklendi
     const [result] = await db.query(
-      "UPDATE messages SET m_status? WHERE m_id=?",
-      [status, id]
+      "UPDATE messages SET m_status = ? WHERE m_id = ?",
+      [Number(status), id]
     );
 
-    res.status(200).json("Mesaj durumu güncellendi.");
+    console.log(`✅ #${id} numaralı mesajın durumu güncellendi:`, status);
+    return res.status(200).json({ message: "Mesaj durumu başarıyla güncellendi." });
   }
   catch (err) {
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("🚨 Mesaj Güncelleme Hatası:", err.message);
+    return res.status(500).json({ error: "Sunucu hatası: " + err.message });
   }
 });
 
-//! MESAJ SİL
+//! MESAJ SİL - DELETE
 app.delete("/api/messages/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const [result] = await db.query("DELETE FROM messages WHERE m_id=?", [id]);
-    res.status(200).json("Mesaj silindi.");
+    if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
+
+    const [result] = await db.query("DELETE FROM messages WHERE m_id = ?", [id]);
+    
+    console.log(`✅ #${id} numaralı mesaj veritabanından tamamen silindi.`);
+    return res.status(200).json({ message: "Mesaj başarıyla silindi." });
   }
   catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("🚨 Mesaj Silme Hatası:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
