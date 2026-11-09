@@ -131,36 +131,21 @@ app.post('/api/products', (req, res) => {
   });
 });
 
-// ! PRODUCTS LİSTELE - GET - ADMIN PANELİ İÇİN
-app.get("/api/products/:id", async (req, res) => {
+// ! PRODUCTS LİSTELE - GET - GENEL VİTRİN VE ÖĞRENCİ PANELİ MAĞAZASI İÇİN
+app.get("/api/products", async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
-
-    // mysql2 kütüphanesinin promise yapısında veri her zaman ilk elemandan [rows] gelir
-    const [users] = await db.query("SELECT u_role FROM users WHERE u_id=?", [id]);
-
-    if (!users || users.length === 0) {
-      return res.status(404).json({ error: "Kullanıcı bulunamadı." });
-    }
-
-    let rows;
-    // EĞER SADECE KENDİ ÜRÜNLERİNİ GÖRECEKSE (Görselde u_id'ler 0 olduğu için eşleşmeyi kontrol edin)
-    if (users[0].u_role == 0) {
-      const [result] = await db.query("SELECT * FROM products WHERE u_id=? ORDER BY p_id ASC", [id]);
-      rows = result;
-    } else {
-      const [result] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
-      rows = result;
-    }
-
-    res.status(200).json(rows);
+    // Veritabanındaki sadece aktif olan veya tüm ürünleri sıralı bir şekilde çeker
+    const [rows] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
+    
+    console.log("🍏 Mağaza ürünleri veritabanından başarıyla çekildi. Toplam adet:", rows.length);
+    return res.status(200).json(rows);
   }
   catch (err) {
-    console.error("Listeleme Hatası:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("🚨 Genel Ürün Listeleme API Hatası:", err.message);
+    return res.status(500).json({ error: "Ürünler listelenirken sunucu hatası oluştu: " + err.message });
   }
 });
+
 
 // ALTERNATİF DOĞRUDAN LİSTELEME ROTASI
 app.get("/api/allAdminProducts", async (req, res) => {

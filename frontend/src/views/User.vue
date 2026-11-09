@@ -30,14 +30,14 @@
                         <button @click="state = 'courses'"
                             class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                             style="width: 80%;" :style="[state === 'courses' ? activeStyle : passiveStyle]">
-                            <i class="bi bi-mortarboard me-2"></i> Eğitimler
+                            <i class="bi bi-mortarboard me-2"></i> Eğitimlerim
                         </button>
 
                         <!-- SERTİFİKALAR -->
                         <button @click="state = 'certificates'"
                             class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                             style="width: 80%;" :style="[state === 'certificates' ? activeStyle : passiveStyle]">
-                            <i class="bi bi-patch-check me-2"></i> Sertifikalar
+                            <i class="bi bi-patch-check me-2"></i> Sertifikalarım
                         </button>
 
                         <!-- ÜRÜNLER (%5 İNDİRİMLİ) -->
@@ -45,7 +45,7 @@
                             class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
                             style="width: 80%;" :style="[state === 'products' ? activeStyle : passiveStyle]">
                             <i class="bi bi-tags me-2"></i> Ürünler <span class="badge bg-danger ms-auto"
-                                style="font-size: 10px;">%5 İndirim</span>
+                                style="font-size: 10px;">%10 İndirim</span>
                         </button>
 
                         <!-- SİPARİŞLER -->
