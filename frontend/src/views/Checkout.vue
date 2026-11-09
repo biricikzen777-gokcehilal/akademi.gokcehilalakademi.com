@@ -214,17 +214,14 @@ export default {
     },
 
     methods: {
-        // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
+               // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
         async checkOut() {
-            if (!this.sepet || this.sepet.length === 0) {
-                console.warn("Sepetiniz boş olduğu için sipariş tamamlanamadı.");
-                return;
-            }
+            if (!this.sepet || this.sepet.length === 0) return;
 
             try {
                 // Sizin orijinal dizi yapınızın ilk elemanına kesin erişim
-                const orderData = this.order[0];
-
+                 const orderData = this.order[0] || this.order; 
+                
                 if (!orderData) {
                     console.error("Fatura adresi verisi bulunamadı.");
                     return;
@@ -232,10 +229,10 @@ export default {
 
                 console.log("Backend'e gönderilen ham sipariş kargosu:", orderData);
 
-                // TC alanına harf girilirse SQL'in çökmesini önlemek için sadece sayıları ayıklıyoruz
+                // TC alanına harf girilirse sadece sayıları ayıklıyoruz
                 let temizTC = String(orderData.TC || "").replace(/\D/g, "");
                 if (temizTC.length !== 11) {
-                    temizTC = "11111111111";
+                    temizTC = "22222222222"; 
                 }
 
                 // o_state kolonu varchar(10) olduğu için seçilen şehri maksimum 10 karakterde buduyoruz
@@ -244,9 +241,7 @@ export default {
                     temizSehir = temizSehir.substring(0, 10);
                 }
 
-                // KESİN DÜZELTME: Sepeti ham reaktif Proxy nesnesi olarak göndermek yerine,
-                // içindeki ürün isimlerini düz bir diziye çevirip öyle paketliyoruz.
-                // Bu sayede Express JSON parser kapıda hiçbir uyumsuzluk hatası üretemez.
+                // Sepeti ham reaktif Proxy nesnesi olarak göndermek yerine düz arındırılmış diziye çeviriyoruz
                 const temizSepetDizisi = this.sepet.map(urun => {
                     return {
                         name: String(urun.name || urun.p_name || "Bilinmeyen Ürün").trim(),
@@ -254,7 +249,8 @@ export default {
                     };
                 });
 
-                // İstek paketini tamamen düz metin ve sayı standartlarına indirgiyoruz
+                // KESİN DÜZELTME: Adres alanındaki (.substring(0, 10)) kısıtlaması tamamen kaldırıldı!
+                // Kullanıcının yazdığı uzun ve Türkçe karakterli adres olduğu gibi sunucuya taşınacak.
                 const payload = {
                     sepet: temizSepetDizisi,
                     TC: String(temizTC),
@@ -262,7 +258,7 @@ export default {
                     lastName: String(orderData.lastName || "Soyisim").trim(),
                     email: orderData.email ? String(orderData.email).trim() : "",
                     phone: orderData.phone ? String(orderData.phone).trim() : "",
-                    address: String(orderData.address || "Adres Belirtilmedi").trim(),
+                    address: String(orderData.address || "Adres Belirtilmedi").trim(), // Karakter budama kilidi söküldü!
                     country: String(orderData.country || "Türkiye"),
                     state: String(temizSehir),
                     zip: orderData.zip ? String(orderData.zip).trim().substring(0, 10) : "00000",
@@ -279,24 +275,26 @@ export default {
                     },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) throw new Error("Sipariş oluşturma isteği başarısız oldu.");
+                
+                if (!response.ok) {
+                    // Sunucudan fırlatılan gerçek SQL hatasını yakalamak için cevabı metne çeviriyoruz
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Sipariş oluşturma isteği sunucu tarafından reddedildi.");
+                }
+                
                 const responseData = await response.json();
 
                 if (responseData) {
                     console.log("Sipariş başarıyla backend ve SQL'e mühürlendi:", responseData);
-
+                    
                     // YEŞİL LÜKS KARE ONAY TOASTI ANINDA EKRANA GELİR
                     this.showSuccessToast = true;
 
-                    // Sipariş onaylandıktan sonra sepet dizisini tamamen sıfırlıyoruz
-                    this.sepet.length = 0;
-
-                    this.sepet.length = 0;
-                    // Sipariş başarıyla bittiği için tarayıcı hafızasındaki sepet yedeklerini de tamamen siliyoruz!
+                    // Sipariş onaylandıktan sonra sepet dizisini ve localStorage hafızasını tamamen sıfırlıyoruz
+                    this.sepet.length = 0; 
                     localStorage.removeItem("gokceSepet");
-
-
+                    if (window.küreselSepetHafizasi) window.küreselSepetHafizasi = [];
+                    
                     // 2.5 saniye sonra bildirimi kapatıp kullanıcıyı anasayfa vitrinine uçurur
                     setTimeout(() => {
                         this.showSuccessToast = false;
@@ -308,6 +306,7 @@ export default {
                 alert("Ödeme sırasında bir hata oluştu: " + e.message);
             }
         },
+
 
         // Ödeme sayfasındaki sepet listesinden tekil ürün silme fonksiyonu
         deleteItem(index) {

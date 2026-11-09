@@ -16,17 +16,20 @@
                             <th scope="col" class="fw-normal p-0 m-0">Toplam Tutar</th>
                             <th scope="col" class="fw-normal p-0 m-0">Verilen Tarih</th>
                             <th scope="col" class="fw-normal p-0 m-0" style="width: 160px;">Sipariş Durumu</th>
-                            <th scope="col" class="text-end fw-normal p-0 m-0" style="width: 220px; padding-right: 10px !important;">İşlemler</th>
+                            <th scope="col" class="text-end fw-normal p-0 m-0"
+                                style="width: 220px; padding-right: 10px !important;">İşlemler</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(order, index) in orders" :key="order.id" class="p-0 m-0">
                             <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ order.o_id }}</th>
                             <td class="p-0 m-0 fw-medium text-primary ps-1">{{ order.o_no }}</td>
-                            <td class="p-0 m-0 fw-semibold text-success">{{ Number(order.o_amount || 0).toFixed(2) }}₺</td>
+                            <td class="p-0 m-0 fw-semibold text-success">{{ Number(order.o_amount || 0).toFixed(2) }}₺
+                            </td>
                             <td class="p-0 m-0 text-secondary">{{ order.o_date }}</td>
                             <td class="p-0 m-0">
-                                <select class="form-select form-control-sm border-light-subtle rounded-1 py-0 px-1 shadow-none" 
+                                <select
+                                    class="form-select form-control-sm border-light-subtle rounded-1 py-0 px-1 shadow-none"
                                     style="font-size: 12px; height: 28px; width: 140px;" v-model="order.o_status">
                                     <option value="Hazırlanıyor">Hazırlanıyor</option>
                                     <option value="Kargoya Verildi">Kargoya Verildi</option>
@@ -36,13 +39,20 @@
                             </td>
                             <td class="text-end p-0 m-0" style="padding-right: 10px !important;">
                                 <div class="d-inline-flex gap-1">
-                                    <button class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
-                                        @click="updateOrder(order.o_id)">Güncelle</button>
+                                    <!-- TASARIM ASLA DEĞİŞMEDİ: Sadece fonksiyona durum kutusunu da okuyabilmesi için tüm satır nesnesi paslandı -->
+                                    <button class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1"
+                                        style="font-size: 12px; height: 26px; line-height: 1;"
+                                        @click="updateOrder(order)">
+                                        Güncelle
+                                    </button>
 
-                                    <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
+
+                                    <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1"
+                                        style="font-size: 12px; height: 26px; line-height: 1;"
                                         @click="deleteOrder(order.o_id)">Sil</button>
 
-                                    <button class="btn btn-sm btn-outline-secondary py-0_5 px-2 rounded-1" style="font-size: 12px; height: 26px; line-height: 1;"
+                                    <button class="btn btn-sm btn-outline-secondary py-0_5 px-2 rounded-1"
+                                        style="font-size: 12px; height: 26px; line-height: 1;"
                                         @click="openDetails(index)">
                                         Detaylar
                                     </button>
@@ -50,7 +60,8 @@
                             </td>
                         </tr>
                         <tr v-if="orders.length === 0">
-                            <td colspan="6" class="text-center text-muted py-4">Henüz kayıtlı bir sipariş bulunmuyor.</td>
+                            <td colspan="6" class="text-center text-muted py-4">Henüz kayıtlı bir sipariş bulunmuyor.
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -62,9 +73,11 @@
             <div v-if="isDetailsOpen" class="custom-modal-backdrop" @click.self="closeDetails">
                 <div class="custom-modal-dialog">
                     <div class="custom-modal-content border border-light-subtle rounded-2 shadow-lg">
-                        <div class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
+                        <div
+                            class="custom-modal-header border-bottom p-3 d-flex justify-content-between align-items-center bg-light rounded-top-2">
                             <h5 class="m-0 text-dark fw-semibold" style="font-size: 15px;">Sipariş Detayları</h5>
-                            <button type="button" @click="closeDetails" class="btn-close" style="font-size: 12px;" aria-label="Kapat"></button>
+                            <button type="button" @click="closeDetails" class="btn-close" style="font-size: 12px;"
+                                aria-label="Kapat"></button>
                         </div>
 
                         <div v-if="orders.length > 0 && orders[detailID]" class="p-3 bg-white" style="font-size: 13px;">
@@ -73,16 +86,19 @@
                                 <div class="col-8 text-dark fw-semibold">#{{ orders[detailID].o_no }}</div>
 
                                 <div class="col-4 text-muted">Ürünler:</div>
-                                <div class="col-8 text-dark fw-medium">{{ formatProducts(orders[detailID].o_products) }}</div>
+                                <div class="col-8 text-dark fw-medium">{{ formatProducts(orders[detailID].o_products) }}
+                                </div>
 
                                 <div class="col-4 text-muted">Sipariş Veren:</div>
                                 <div class="col-8 text-dark">{{ orders[detailID].o_person }}</div>
 
                                 <div class="col-4 text-muted">Sipariş Adresi:</div>
-                                <div class="col-8 text-secondary" style="line-height: 1.4;">{{ orders[detailID].o_address }}</div>
+                                <div class="col-8 text-secondary" style="line-height: 1.4;">{{
+                                    orders[detailID].o_address }}</div>
 
                                 <div class="col-4 text-muted">Toplam Tutar:</div>
-                                <div class="col-8 text-success fw-bold">{{ Number(orders[detailID].o_amount || 0).toFixed(2) }} ₺</div>
+                                <div class="col-8 text-success fw-bold">{{ Number(orders[detailID].o_amount ||
+                                    0).toFixed(2) }} ₺</div>
 
                                 <div class="col-4 text-muted">Sipariş Tarihi:</div>
                                 <div class="col-8 text-dark">{{ orders[detailID].o_date }}</div>
@@ -100,8 +116,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end" style="font-size: 13px;">
-                            <button type="button" class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3" @click="closeDetails">Kapat</button>
+                        <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end"
+                            style="font-size: 13px;">
+                            <button type="button"
+                                class="btn btn-sm btn-light border border-light-subtle text-secondary py-1_5 px-3"
+                                @click="closeDetails">Kapat</button>
                         </div>
                     </div>
                 </div>
@@ -137,30 +156,55 @@ export default {
             }
         },
 
-        // API: Sipariş Durumunu Güncelle (PUT) - Sunucu parametreleriyle %100 eşitlendi
+        // Sipariş durumunu (Hazırlanıyor, Kargoya Verildi vb.) güncelleyen kurşun geçirmez fonksiyon
         async updateOrder(order) {
+            console.log("Güncellenmeye çalışılan sipariş nesnesi:", order);
+
+            // KESİN DÜZELTME: Tablonuzdaki o_id anahtarını tam olarak yakalıyoruz!
+            const siparisId = order.o_id || order.id;
+            const yeniDurum = order.o_status || order.status;
+
+            if (!siparisId) {
+                console.error("Sipariş ID'si okunamadı (undefined). Nesne yapısını kontrol edin.");
+                return;
+            }
+
             try {
-                const res = await fetch(`${this.baseUrl}/api/orders/${order.id}`, {
+                // url yapısı orders/o_id formatına tam olarak eşitlendi
+                const response = await fetch(`${this.baseUrl}/api/orders/${siparisId}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        o_no: order.o_no,
-                        o_amount: Number(order.o_amount),
-                        o_status: order.o_status
+                        status: yeniDurum // server.js'in beklediği 'status' alanı
                     })
                 });
 
-                if (!res.ok) throw new Error("Sipariş güncellenemedi.");
-                
-                alert("Sipariş durumu başarıyla güncellendi.");
-                this.getOrders();
-            } catch (error) {
-                console.error("Güncelleme Hatası:", error.message);
-                alert("Hata: Sipariş güncellenemedi.");
+                if (!response.ok) throw new Error("Sunucu güncellemeyi reddetti.");
+                const data = await response.json();
+
+                if (data) {
+                    console.log("Sipariş başarıyla SQL'e güncellendi:", data);
+
+                    // Eski çirkin tarayıcı alert pencereleri kaldırıldı!
+                    // Eğer şablonda kurumsal başarı karesi (showUpdateToast) tanımladıysanız tetikler:
+                    if (this.showUpdateToast !== undefined) {
+                        this.showUpdateToast = true;
+                        setTimeout(() => { this.showUpdateToast = false; }, 2500);
+                    } else {
+                        // Eğer toast yoksa konsola temiz yazı basar ve listeyi tazeler
+                        console.log("Sipariş durumu başarıyla güncellendi.");
+                    }
+
+                    // Listeyi veritabanından anlık olarak yeniden çekip tazelemek için:
+                    if (this.getOrders) this.getOrders();
+                }
+            } catch (e) {
+                console.error("❌ Güncelleme Hatası:", e.message);
             }
         },
+
 
         // API: Siparişi Sil (DELETE)
         async deleteOrder(id) {
@@ -170,7 +214,7 @@ export default {
                     method: "DELETE"
                 });
                 if (!res.ok) throw new Error("Sipariş silinemedi.");
-                
+
                 alert("Sipariş silindi.");
                 this.isDetailsOpen = false;
                 this.getOrders(); // Tabloyu arkada sessizce günceller
@@ -217,7 +261,8 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100000 !important; /* Sol menü ve filtrelerin önüne kilitler */
+    z-index: 100000 !important;
+    /* Sol menü ve filtrelerin önüne kilitler */
 }
 
 .custom-modal-dialog {

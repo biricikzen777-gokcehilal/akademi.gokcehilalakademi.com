@@ -131,21 +131,36 @@ app.post('/api/products', (req, res) => {
   });
 });
 
-// ! PRODUCTS LİSTELE - GET - GENEL VİTRİN VE ÖĞRENCİ PANELİ MAĞAZASI İÇİN
-app.get("/api/products", async (req, res) => {
+// ! PRODUCTS LİSTELE - GET - ADMIN PANELİ İÇİN
+app.get("/api/products/:id", async (req, res) => {
   try {
-    // Veritabanındaki sadece aktif olan veya tüm ürünleri sıralı bir şekilde çeker
-    const [rows] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
-    
-    console.log("🍏 Mağaza ürünleri veritabanından başarıyla çekildi. Toplam adet:", rows.length);
-    return res.status(200).json(rows);
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
+
+    // mysql2 kütüphanesinin promise yapısında veri her zaman ilk elemandan [rows] gelir
+    const [users] = await db.query("SELECT u_role FROM users WHERE u_id=?", [id]);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: "Kullanıcı bulunamadı." });
+    }
+
+    let rows;
+    // EĞER SADECE KENDİ ÜRÜNLERİNİ GÖRECEKSE (Görselde u_id'ler 0 olduğu için eşleşmeyi kontrol edin)
+    if (users[0].u_role == 0) {
+      const [result] = await db.query("SELECT * FROM products WHERE u_id=? ORDER BY p_id ASC", [id]);
+      rows = result;
+    } else {
+      const [result] = await db.query("SELECT * FROM products ORDER BY p_id ASC");
+      rows = result;
+    }
+
+    res.status(200).json(rows);
   }
   catch (err) {
-    console.error("🚨 Genel Ürün Listeleme API Hatası:", err.message);
-    return res.status(500).json({ error: "Ürünler listelenirken sunucu hatası oluştu: " + err.message });
+    console.error("Listeleme Hatası:", err.message);
+    res.status(500).json({ error: err.message });
   }
 });
-
 
 // ALTERNATİF DOĞRUDAN LİSTELEME ROTASI
 app.get("/api/allAdminProducts", async (req, res) => {
@@ -293,7 +308,7 @@ app.delete("/api/messages/:id", async (req, res) => {
 
 
 
-// ! ORDERS LİSTELE - GET - SQL SORGUSU: SELECT
+// ! ORDERS LİSTELE - GET - SQL SORGUSU: SELECT (Tüm Siparişleri Admin İçin Listeler)
 app.get("/api/orders", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM orders ORDER BY o_id DESC");
@@ -305,17 +320,19 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
-//! ORDERS EKLE - POST - SQL SORGUSU: INSERT INTO (Checkout.vue ile %100 Uyumlu)
+//! ORDERS EKLE - POST - SQL SORGUSU: INSERT INTO (phpMyAdmin ile %100 Uyumlu Kesin Sürüm)
 app.post("/api/orders", async (req, res) => {
   try {
     const { sepet, TC, firstName, lastName, email, phone, address, country, state, zip, amount } = req.body;
+
+    console.log("📥 Sunucuya Giriş Yapan Ham Kargo:", req.body);
 
     // 1. Temel Sepet Doğrulaması
     if (!sepet || sepet.length === 0) {
       return res.status(400).json({ error: "Sepet boş geldi." });
     }
 
-    // 2. phpMyAdmin tablonuzdaki o_no için rastgele benzersiz sipariş numarası üretiyoruz
+    // 2. phpMyAdmin tablonuzdaki o_no için benzersiz sipariş numarası üretiyoruz
     const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
 
     // 3. Tablonuzdaki o_person için ad ve soyadı birleştiriyoruz
@@ -324,6 +341,7 @@ app.post("/api/orders", async (req, res) => {
     // 4. Sepetteki ürün isimlerini tek bir metin (string) haline getiriyoruz
     const urunIsimleri = sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
 
+    // KESİN DÜZELTME: Olmayan 'o_date' kolonu ve soru işareti sorgudan tamamen söküldü!
     const query = `
       INSERT INTO orders 
       (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
@@ -337,14 +355,16 @@ app.post("/api/orders", async (req, res) => {
       tamIsim.substring(0, 30), // varchar(30) sınırı
       email ? String(email).trim().toLowerCase().substring(0, 50) : null,
       phone ? String(phone).trim().substring(0, 20) : null,
-      address ? String(address).trim().substring(0, 10) : "Adres Yok", // varchar(100) sınırı
+      address ? String(address).trim().substring(0, 100) : "Adres Belirtilmedi", // varchar(100) sınırı
       "Yeni Sipariş", // o_status başlangıç durumu (varchar30)
       zip ? String(zip).trim().substring(0, 10) : "00000",
       amount ? Number(amount) : 0
     ];
 
+    console.log("💾 SQL'e Gönderilen Arındırılmış Paket Dizisi:", values);
+
     const [result] = await db.query(query, values);
-    console.log(`✅ Sipariş başarıyla SQL'e yazıldı! Sipariş No: ${rastgeleSiparisNo}`);
+    console.log(`✅ Sipariş başarıyla phpMyAdmin veritabanına mühürlendi! Tablo ID: #${result.insertId}`);
 
     return res.status(201).json({ 
       success: true, 
@@ -354,21 +374,22 @@ app.post("/api/orders", async (req, res) => {
     });
   }
   catch (err) {
-    console.error("❌ SQL Sipariş Ekleme Hatası:", err.message);
+    console.error("❌ SQL Sipariş Ekleme Hatası Detayı:", err.message);
     return res.status(500).json({ error: err.message });
   }
 });
 
-//! ORDERS GÜNCELLE - PUT - SQL SORGUSU: UPDATE SET
+
+//! ORDERS GÜNCELLE - PUT - SQL SORGUSU: UPDATE SET (Admin Panelinden Durum Değiştirme)
 app.put("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { status } = req.body; // Yönetim panelinden sadece sipariş durumu güncellenir (Örn: Hazırlanıyor, Tamamlandı)
+    const { status } = req.body; // Yönetim panelinden gelen yeni sipariş durumu (Örn: Hazırlanıyor, Tamamlandı)
 
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
     if (!status) return res.status(400).json({ error: "Hatalı veri geldi." });
 
-    // DÜZELTME: Sorgu parametreleri ve eşittir dengesi sağlandı
+    // o_status kolonunu güncelleyen temiz SQL kuralı
     const [result] = await db.query(
       "UPDATE orders SET o_status = ? WHERE o_id = ?",
       [String(status).trim(), id]
@@ -378,7 +399,7 @@ app.put("/api/orders/:id", async (req, res) => {
       return res.status(404).json({ error: "Güncellenecek sipariş bulunamadı." });
     }
     
-    return res.status(200).json({ message: "Sipariş durumu güncellendi." });
+    return res.status(200).json({ message: "Sipariş durumu başarıyla güncellendi." });
   }
   catch (err) {
     console.error("❌ Sipariş Güncelleme Hatası:", err.message);
@@ -386,14 +407,14 @@ app.put("/api/orders/:id", async (req, res) => {
   }
 });
 
-//! ORDERS SİL DELETE - SQL SORGUSU: DELETE
+//! ORDERS SİL - DELETE - SQL SORGUSU: DELETE
 app.delete("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
 
     const [result] = await db.query("DELETE FROM orders WHERE o_id = ?", [id]);
-    console.log(`✅ #${id} numaralı sipariş başarıyla silindi.`);
+    console.log(`✅ #${id} numaralı sipariş başarıyla veritabanından silindi.`);
     return res.status(200).json("Sipariş silindi.");
   }
   catch (err) {
@@ -401,6 +422,7 @@ app.delete("/api/orders/:id", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 
 

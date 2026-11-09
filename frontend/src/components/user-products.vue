@@ -97,7 +97,6 @@ export default {
             }
         },
 
-
         // %10 İndirim Hesaplama Motoru (Kuruşları yuvarlar)
         calculateDiscount(price) {
             const rawPrice = Number(price || 0);
@@ -105,18 +104,22 @@ export default {
             return Math.round(discounted * 100) / 100;
         },
 
-        // İndirimli Fiyatı Hesaplayıp Dün Gece Kurduğumuz Kurşun Geçirmez Window Hafızasına Ekleyen Fonksiyon
+               // İndirimli Fiyatı Hesaplayıp Tarayıcı Hafızasındaki Metoda Gönderen Fonksiyon
         addCartWithDiscount(product) {
             if (!product) return;
 
             const indirimliFiyat = this.calculateDiscount(product.p_price || product.price);
 
-            // App.vue'nun addCart fonksiyonunun anlık okuyabileceği temiz indirimli obje
+            // KESİN DÜZELTME: App.vue'nun tam olarak aradığı 'name' ve 'price' standart alanlarını da pakete ekliyoruz!
             const indirimliUrunPaketi = {
                 p_id: product.p_id || product.id,
                 p_name: product.p_name || product.name,
-                p_price: indirimliFiyat // Ürün sepete %10 indirimli fiyatıyla push edilir!
+                name: product.p_name || product.name,
+                p_price: indirimliFiyat,
+                price: indirimliFiyat // %10 İndirimli ham sayı değeri tam kilitlendi
             };
+
+            console.log("🚀 Küresel hafızaya uçurulan indirimli kargo:", indirimliUrunPaketi);
 
             if (window.küreselSepeteEkle) {
                 window.küreselSepeteEkle(indirimliUrunPaketi);
@@ -124,6 +127,7 @@ export default {
                 console.error("Küresel sepet fonksiyonu tarayıcı hafızasında bulunamadı!");
             }
         },
+
 
         // İsimlere göre otomatik Bootstrap İkon eşleştirme motoru
         getCardIcon(name) {

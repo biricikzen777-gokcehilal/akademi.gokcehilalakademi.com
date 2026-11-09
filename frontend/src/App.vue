@@ -829,7 +829,7 @@ export default {
             window.location.reload(); // Değişikliklerin arayüze anında yansıması için sayfayı yeniler
         },
 
-        // 9. Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
+              // 9. Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
         addCart(product) {
             console.log("=== ASIL APP.VUE TETİKLENDİ ===", product);
 
@@ -838,30 +838,31 @@ export default {
                 return;
             }
 
-            // KESİN DÜZELTME: Nesne altındaki .liste dizisine push yapıyoruz
-            this.sepet.liste.push({
-                name: product.p_name || product.name || "Bilinmeyen Ürün",
-                price: Number(product.p_price || product.price || 0)
+            // Gelen kargo paketindeki tüm olası fiyat ve isim parametrelerini (p_price, price, p_name, name) garantiye alıyoruz
+            const urunAdi = String(product.p_name || product.name || "Bilinmeyen Ürün").trim();
+            const urunFiyati = Number(product.p_price || product.price || 0);
+
+            // Küresel reaktif sepet dizimize ekliyoruz
+            this.sepet.push({
+                name: urunAdi,
+                price: urunFiyati
             });
 
-            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet.liste));
-
-
-            // KESİN DÜZELTME: Ürün eklenir eklenmez sepetin güncel halini tarayıcı hafızasına mühürlüyoruz!
-            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
-
-            // BİLDİRİMİ TETİKLE
-            this.showSuccessToast = false; // Eski çakışmaları sıfırla
-            this.showCartToast = true;
-
-            setTimeout(() => {
-                this.showCartToast = false;
-            }, 2500);
-                        // Ürün eklendikten sonra localStorage'a ve window hafızasına anlık mühürlüyoruz
+            // KESİN DÜZELTME: Ürün eklenir eklenmez sepetin güncel halini tarayıcı hafızasına ve pencere belleğine mühürlüyoruz!
             localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
             window.küreselSepetHafizasi = this.sepet;
 
+            console.log("✅ Ürün sepete ve hafızaya başarıyla mühürlendi:", this.sepet);
+
+            // BİLDİRİMİ TETİKLE: Pembe başarı karesini anında true yaparak ekrana fırlatıyoruz!
+            this.showCartToast = true;
+
+            // Bildirimi 2.5 saniye sonra ekrandan zarifçe kaldırır
+            setTimeout(() => {
+                this.showCartToast = false;
+            }, 2500);
         },
+
 
 
         provide() {
