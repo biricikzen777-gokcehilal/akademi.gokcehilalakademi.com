@@ -183,7 +183,7 @@
 <script>
 export default {
     name: 'CheckoutPage',
-    inject: ['sepet'], // App.vue'dan gelen küresel reaktif sepet dizisini yakalar
+    inject: [], // Enjeksiyon kaldırıldı
     data() {
         return {
             // Sizin orijinal dizi yapınız [ ] aynen korundu
@@ -199,21 +199,22 @@ export default {
             showSuccessToast: false
         };
     },
+       
     computed: {
+        sepet() {
+            return window.küreselSepetHafizasi || [];
+        },
         araTutar() {
-            if (!this.sepet) return 0;
+            if (!this.sepet || !Array.isArray(this.sepet)) return 0;
             const toplam = this.sepet.reduce((acc, urun) => acc + Number(urun.price), 0);
             return Math.round(toplam * 100) / 100;
         },
-        kdvTutari() {
-            return Math.round((this.araTutar * 0.2) * 100) / 100;
-        },
-        kdvliToplamTutar() {
-            return Math.round((this.araTutar * 1.2) * 100) / 100;
-        }
+        kdvTutari() { return Math.round((this.araTutar * 0.2) * 100) / 100; },
+        kdvliToplamTutar() { return Math.round((this.araTutar * 1.2) * 100) / 100; }
     },
+
     methods: {
-               // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
+        // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
         async checkOut() {
             if (!this.sepet || this.sepet.length === 0) {
                 console.warn("Sepetiniz boş olduğu için sipariş tamamlanamadı.");
@@ -223,7 +224,7 @@ export default {
             try {
                 // Sizin orijinal dizi yapınızın ilk elemanına kesin erişim
                 const orderData = this.order[0];
-                
+
                 if (!orderData) {
                     console.error("Fatura adresi verisi bulunamadı.");
                     return;
@@ -234,7 +235,7 @@ export default {
                 // TC alanına harf girilirse SQL'in çökmesini önlemek için sadece sayıları ayıklıyoruz
                 let temizTC = String(orderData.TC || "").replace(/\D/g, "");
                 if (temizTC.length !== 11) {
-                    temizTC = "11111111111"; 
+                    temizTC = "11111111111";
                 }
 
                 // o_state kolonu varchar(10) olduğu için seçilen şehri maksimum 10 karakterde buduyoruz
@@ -278,19 +279,24 @@ export default {
                     },
                     body: JSON.stringify(payload)
                 });
-                
+
                 if (!response.ok) throw new Error("Sipariş oluşturma isteği başarısız oldu.");
                 const responseData = await response.json();
 
                 if (responseData) {
                     console.log("Sipariş başarıyla backend ve SQL'e mühürlendi:", responseData);
-                    
+
                     // YEŞİL LÜKS KARE ONAY TOASTI ANINDA EKRANA GELİR
                     this.showSuccessToast = true;
 
                     // Sipariş onaylandıktan sonra sepet dizisini tamamen sıfırlıyoruz
-                    this.sepet.length = 0; 
-                    
+                    this.sepet.length = 0;
+
+                    this.sepet.length = 0;
+                    // Sipariş başarıyla bittiği için tarayıcı hafızasındaki sepet yedeklerini de tamamen siliyoruz!
+                    localStorage.removeItem("gokceSepet");
+
+
                     // 2.5 saniye sonra bildirimi kapatıp kullanıcıyı anasayfa vitrinine uçurur
                     setTimeout(() => {
                         this.showSuccessToast = false;
@@ -303,12 +309,13 @@ export default {
             }
         },
 
-
-
-
         // Ödeme sayfasındaki sepet listesinden tekil ürün silme fonksiyonu
         deleteItem(index) {
             this.sepet.splice(index, 1);
+            // Sepetten ürün silindiğinde tarayıcı hafızasındaki yedeği de anlık güncelliyoruz!
+            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
+
+
         }
     }
 };

@@ -57,26 +57,32 @@
 <script>
 export default {
     name: 'SepetComponent',
-    inject: ['sepet'], // App.vue'dan gelen reaktif sepet dizisini yakalar
+    // KESİN ÇÖZÜM: Tüm Vue enjeksiyon bağları iptal edildi, isim çakışması sıfırlandı!
+    inject: [], 
     computed: {
-        // Sepetteki ürünlerin fiyatlarını anlık toplar
+        // Şablondaki 'v-for="... in sepet"' kodları kırılmasın diye sepeti computed olarak bağlıyoruz
+        sepet() {
+            // Tarayıcı belleğindeki mühürlü diziyi okur, eğer henüz yüklenmediyse App.vue boş dizi fırlatır
+            return window.küreselSepetHafizasi || [];
+        },
         toplamTutar() {
+            if (!this.sepet || !Array.isArray(this.sepet)) return 0;
             const toplam = this.sepet.reduce((acc, urun) => acc + Number(urun.price), 0);
             return Math.round(toplam * 100) / 100;
         }
     },
     methods: {
-        // Sepetten ürün silme fonksiyonu
         deleteItem(index) {
             this.sepet.splice(index, 1);
+            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
         },
-        // Ödeme sayfasına yönlendirme motoru
         goCheckout() {
             this.$router.push('/checkout');
         }
     }
 };
 </script>
+
 
 <style scoped>
     /* 🌸 Koyu Pembe İkon Tasarımları */

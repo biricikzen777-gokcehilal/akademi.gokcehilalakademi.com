@@ -451,7 +451,8 @@ export default {
             nav_search: "",
             showSuccessToast: false,
 
-            // Sepetiniz artık sıfırdan tamamen temiz ve boş başlıyor!
+            // KESİN ÇÖZÜM: Referans kopmasını önlemek için sepeti nesne tabanlı listeye çevirdik
+                       // Temiz düz diziye geri döndük
             sepet: [],
 
             // KESİN DÜZELTME: Şablonunuzla tam uyumlu orijinal dizi yapısına geri döndük!
@@ -483,11 +484,29 @@ export default {
         }
     },
 
-      mounted() {
-        // KESİN ÇÖZÜM: addCart fonksiyonunu direkt tarayıcının ana hafızasına (window) kilitliyoruz.
-        // Böylece projenin neresinde olursa olsun bu fonksiyon .bind(this) korumasıyla tetiklenebilecek!
+    mounted() {
+        // addCart fonksiyon kilidi aynen kalıyor
         window.küreselSepeteEkle = this.addCart.bind(this);
-        console.log("🚀 Küresel sepet tetikleyicisi tarayıcı hafızasına mühürlendi.");
+        
+        // KESİN ÇÖZÜM: sepet dizisinin kendisini de tarayıcı ana hafızasına (window) mühürliyoruz!
+        window.küreselSepetHafizasi = this.sepet;
+        console.log("🚀 Küresel sepet dizisi tarayıcı hafızasına mühürlendi.");
+
+        try {
+            const kayitliSepet = localStorage.getItem("gokceSepet");
+            if (kayitliSepet) {
+                const hafizadakiUrunler = JSON.parse(kayitliSepet);
+                if (Array.isArray(hafizadakiUrunler)) {
+                    // Verileri temiz dizimize push ederek dolduruyoruz
+                    this.sepet.length = 0;
+                    this.sepet.push(...hafizadakiUrunler);
+                    console.log("📦 Eski sepet verileri başarıyla geri yüklendi:", this.sepet);
+                }
+            }
+        } catch (e) {
+            console.error("Sepet hafızadan okunurken hata oluştu:", e.message);
+            this.sepet.length = 0;
+        }
     },
 
 
@@ -810,7 +829,7 @@ export default {
             window.location.reload(); // Değişikliklerin arayüze anında yansıması için sayfayı yeniler
         },
 
-        // Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
+        // 9. Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
         addCart(product) {
             console.log("=== ASIL APP.VUE TETİKLENDİ ===", product);
 
@@ -819,34 +838,39 @@ export default {
                 return;
             }
 
-            // Gelen nesneden verileri yakalayıp sepet dizisine push ediyoruz
-            this.sepet.push({
+            // KESİN DÜZELTME: Nesne altındaki .liste dizisine push yapıyoruz
+            this.sepet.liste.push({
                 name: product.p_name || product.name || "Bilinmeyen Ürün",
                 price: Number(product.p_price || product.price || 0)
             });
 
-            // BİLDİRİMİ TETİKLE: Pembe başarı karesini anında true yaparak ekrana fırlatıyoruz!
-            this.showCartToast = true;
-            console.log("showCartToast durumu aktif edildi:", this.showCartToast);
+            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet.liste));
 
-            // Bildirimi 2.5 saniye sonra ekrandan zarifçe kaldırır
+
+            // KESİN DÜZELTME: Ürün eklenir eklenmez sepetin güncel halini tarayıcı hafızasına mühürlüyoruz!
+            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
+
+            // BİLDİRİMİ TETİKLE
+            this.showSuccessToast = false; // Eski çakışmaları sıfırla
+            this.showCartToast = true;
+
             setTimeout(() => {
                 this.showCartToast = false;
-                console.log("showCartToast durumu kapatildi.");
             }, 2500);
+                        // Ürün eklendikten sonra localStorage'a ve window hafızasına anlık mühürlüyoruz
+            localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
+            window.küreselSepetHafizasi = this.sepet;
+
         },
+
 
         provide() {
             return {
-                // Sepet dizisini alt bileşenlere reaktif dağıtır
-                sepet: this.sepet,
-
-                // KESİN DÜZELTME: Çakışmayı önlemek için ismini 'globalAddCart' yaptık ve .bind(this) ile kilitledik
-                globalAddCart: this.addCart.bind(this)
+                // Nesneyi doğrudan paylaştığımız için alt bileşenler bağı asla kaybetmeyecek
+                sepetObjesi: this.sepet,
+                addCart: this.addCart.bind(this)
             }
         },
-
-
     }
 };
 
