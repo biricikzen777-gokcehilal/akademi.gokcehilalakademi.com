@@ -10,6 +10,8 @@ const fs = require('fs'); // Klasör oluşturabilmek için en üste ekleyin (eğ
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+app.use(express.json()); // Frontend'den gelen sipariş kargo paketini açmayı sağlayan anahtar motor
+
 
 // Ürün resimlerinin bulunduğu klasörü dışarıya aç
 
@@ -309,30 +311,66 @@ app.delete("/api/messages/:id", async (req, res) => {
 // ! ORDERS LİSTELE - GET - SQL SORGUSU: SELECT
 app.get("/api/orders", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM orders ORDER BY o_id ASC");
-    console.log(rows)
-    res.status(200).json(rows);
+    const [rows] = await db.query("SELECT * FROM orders ORDER BY o_id DESC");
+    return res.status(200).json(rows);
   }
   catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Sipariş Listeleme Hatası:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
-//! ORDERS EKLE - POST - SQL SORGUSU: INSERT INTO
+//! ORDERS EKLE - POST - SQL SORGUSU: INSERT INTO (Checkout.vue ile %100 Uyumlu)
 app.post("/api/orders", async (req, res) => {
   try {
-    const { no, products, person, address, amount } = req.body;
-    if (!no || !products || !person || !address || !amount) return res.status(400).json({ error: "Hatalı veri geldi." });
-    const [result] = await db.query(
-      "INSERT INTO orders (o_no, o_products, o_person, o_address, o_amount) VALUES (?, ?, ?, ?, ?)",
-      [no, products, person, address, amount]
-    );
+    const { sepet, TC, firstName, lastName, email, phone, address, country, state, zip, amount } = req.body;
 
-    const [rows] = await db.query("SELECT * FROM orders WHERE p_id=?", [result.o_id]);
-    res.status(201).json(" Sipariş eklendi.");
+    // 1. Temel Sepet Doğrulaması
+    if (!sepet || sepet.length === 0) {
+      return res.status(400).json({ error: "Sepet boş geldi." });
+    }
+
+    // 2. phpMyAdmin tablonuzdaki o_no için rastgele benzersiz sipariş numarası üretiyoruz
+    const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
+
+    // 3. Tablonuzdaki o_person için ad ve soyadı birleştiriyoruz
+    const tamIsim = ((firstName || "İsim") + " " + (lastName || "Soyisim")).trim();
+
+    // 4. Sepetteki ürün isimlerini tek bir metin (string) haline getiriyoruz
+    const urunIsimleri = sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
+
+    const query = `
+      INSERT INTO orders 
+      (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      rastgeleSiparisNo,
+      TC ? String(TC).trim().substring(0, 11) : "11111111111",
+      urunIsimleri,
+      tamIsim.substring(0, 30), // varchar(30) sınırı
+      email ? String(email).trim().toLowerCase().substring(0, 50) : null,
+      phone ? String(phone).trim().substring(0, 20) : null,
+      address ? String(address).trim().substring(0, 10) : "Adres Yok", // varchar(100) sınırı
+      "Yeni Sipariş", // o_status başlangıç durumu (varchar30)
+      zip ? String(zip).trim().substring(0, 10) : "00000",
+      amount ? Number(amount) : 0
+    ];
+
+    const [result] = await db.query(query, values);
+    console.log(`✅ Sipariş başarıyla SQL'e yazıldı! Sipariş No: ${rastgeleSiparisNo}`);
+
+    return res.status(201).json({ 
+      success: true, 
+      message: "Sipariş eklendi.", 
+      orderId: result.insertId,
+      orderNo: rastgeleSiparisNo
+    });
   }
   catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ SQL Sipariş Ekleme Hatası:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -340,26 +378,26 @@ app.post("/api/orders", async (req, res) => {
 app.put("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { no, products, person, address, amount } = req.body;
+    const { status } = req.body; // Yönetim panelinden sadece sipariş durumu güncellenir (Örn: Hazırlanıyor, Tamamlandı)
 
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
-    if (!no || !products || !person || !address || !amount)
+    if (!status) return res.status(400).json({ error: "Hatalı veri geldi." });
 
-      return res.status(400).json({ error: "Hatalı veri geldi." });
-
+    // DÜZELTME: Sorgu parametreleri ve eşittir dengesi sağlandı
     const [result] = await db.query(
-      "UPDATE orders SET o_no=?, o_products=?, o_person=?, o_address=? WHERE o_id=?",
-      [no, products, person, address, amount]
+      "UPDATE orders SET o_status = ? WHERE o_id = ?",
+      [String(status).trim(), id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Güncellenecek sipariş bulunamadı." });
     }
-    const [rows] = await db.query("SELECT * FROM orders WHERE o_id=?", [id]);
-    res.status(200).json(" Sipariş güncellendi.");
+    
+    return res.status(200).json({ message: "Sipariş durumu güncellendi." });
   }
   catch (err) {
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("❌ Sipariş Güncelleme Hatası:", err.message);
+    return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
@@ -367,13 +405,18 @@ app.put("/api/orders/:id", async (req, res) => {
 app.delete("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const [result] = await db.query("DELETE FROM orders WHERE o_id=?", [id]);
-    res.status(200).json("Sipariş silindi.");
+    if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
+
+    const [result] = await db.query("DELETE FROM orders WHERE o_id = ?", [id]);
+    console.log(`✅ #${id} numaralı sipariş başarıyla silindi.`);
+    return res.status(200).json("Sipariş silindi.");
   }
   catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Sipariş Silme Hatası:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
@@ -584,7 +627,65 @@ app.post('/api/getUsername', async (req, res) => {
 });
 
 
-//? CHECKOUT - POST - SQL SORGUSU: INSERT INTO
+//? CHECKOUT - POST - SQL SORGUSU: INSERT INTO (phpMyAdmin Tablo Yapısıyla %100 Uyumlu Kesin Sürüm)
+app.post("/api/orders", async (req, res) => {
+  try {
+    const data = req.body;
+    
+    // 1. Sepetteki ürünlerin isimlerini temiz bir metin halinde birleştiriyoruz
+    let urunIsimleri = "Ürün Bilgisi Yok";
+    if (data.sepet && Array.isArray(data.sepet)) {
+      urunIsimleri = data.sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
+    }
+
+    // 2. Tablonuzdaki o_no (Sipariş Numarası) için rastgele benzersiz bir kod üretiyoruz
+    const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
+
+    // 3. Tablonuzdaki o_person için ad ve soyadı tek bir metin olarak birleştiriyoruz
+    const tamIsim = ((data.firstName || "İsimsiz") + " " + (data.lastName || "Soyisimsiz")).trim();
+
+    // phpMyAdmin tablonuzdaki kolon isimleriyle birebir eşleşen kusursuz SQL sorgusu
+    const query = `
+      INSERT INTO orders 
+      (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    // Tablonuzun veri türlerine ve sıralamasına tam oturan değerler dizisi
+    const values = [
+      rastgeleSiparisNo,                                 // 1. o_no (varchar10) - Boş kalamaz
+      data.TC ? String(data.TC).trim() : "00000000000",   // 2. o_tc (varchar11) - Boş kalamaz
+      urunIsimleri,                                      // 3. o_products (text) - Boş kalamaz
+      tamIsim,                                           // 4. o_person (varchar30) - Boş kalamaz
+      data.email ? String(data.email).trim().toLowerCase() : null, // 5. o_email (varchar50) - Evet NULL olabilir
+      data.phone ? String(data.phone).trim() : null,     // 6. o_phone (varchar20) - Evet NULL olabilir
+      data.address ? String(data.address).trim() : "Adres Belirtilmedi", // 7. o_adress (varchar100) - Boş kalamaz
+      "Yeni Sipariş",                                    // 8. o_status (varchar30) - Boş kalamaz
+      data.zip ? String(data.zip).trim() : "00000",      // 9. o_zip (varchar10) - Boş kalamaz
+      data.amount ? Number(data.amount) : 0              // 10. o_amount (decimal10,2) - Boş kalamaz
+    ];
+
+    console.log(`💾 SQL'e mühürlenecek sipariş numarası: ${rastgeleSiparisNo}`);
+
+    // Sorguyu asenkron (await) yapısıyla veritabanına gönderiyoruz
+    const [result] = await db.query(query, values);
+    
+    console.log(`✅ Sipariş başarıyla phpMyAdmin veritabanına mühürlendi! Tablo ID: #${result.insertId}`);
+    
+    return res.status(201).json({ 
+      success: true, 
+      message: "Siparişiniz başarıyla oluşturuldu.", 
+      orderId: result.insertId,
+      orderNo: rastgeleSiparisNo
+    });
+
+  } catch (e) {
+    console.error("❌ MYSQL SİPARİŞ KAYIT HATASI DETAYI:", e.message);
+    return res.status(400).json({ error: "Veritabanı kayıt hatası: " + e.message });
+  }
+});
+
+
 
 
 //? REGISTER - POST - SQL SORGUSU: INSERT INTO

@@ -3,8 +3,7 @@
         <!-- MAĞAZA BAŞLIĞI -->
         <div class="text-center  mt-4  mb-5">
             <h1 class="fw-bold" style="color: #C71585;">Gökçe Hilal Akademi Mağazası</h1>
-            <p class="text-muted">Shopier mağazamızdaki orijinal programlarımıza, ürünlerimize ve telkin müziklerimize
-                buradan ulaşabilirsiniz.</p>
+            <p class="text-muted">Ruhsal Şifa İlmi çalışmalarıma, özel içeriklerime, aromaterapi karışımlarıma ve telkin müziklerime buradan ulaşabilirsiniz.</p>
         </div>
 
         <!-- ÜRÜN KARTLARI LİSTESİ -->
