@@ -1,4 +1,7 @@
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET || "gokce_projesi_ozel_gizli_anahtari_2026";
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -307,8 +310,36 @@ app.delete("/api/messages/:id", async (req, res) => {
 
 
 
+// ==========================================
+//           SİPARİŞ YÖNETİMİ ROTALARI
+// ==========================================
 
-// ! ORDERS LİSTELE - GET - SQL SORGUSU: SELECT (Tüm Siparişleri Admin İçin Listeler)
+// ! 1.  ! KULLANICI SİPARİŞLERİNİ LİSTELE - GET (Kullanıcı Paneli İçin Kesin Sürüm)
+app.get("/api/user-orders", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(200).json([]); // Email yoksa hata fırlatmak yerine boş dizi dönelim ki ön yüz çökmesin
+    }
+
+    // SQL sorgusunu daha güvenli ve doğrudan o_email ile eşleşecek şekilde çalıştırıyoruz
+    const [rows] = await db.query(
+      "SELECT * FROM orders WHERE o_email = ? ORDER BY o_id DESC", 
+      [String(email).trim()]
+    );
+    
+    return res.status(200).json(rows);
+  }
+  catch (err) {
+    console.error("❌ Kullanıcı Sipariş Listeleme Hatası Detayı:", err.message);
+    // Hata durumunda bile ön yüzün kaydırılabilmesi için boş dizi dönüyoruz
+    return res.status(200).json([]); 
+  }
+});
+
+
+// ! 2. TÜM SİPARİŞLERİ LİSTELE - GET (Admin Paneli İçin Geri Getirilen Rota)
 app.get("/api/orders", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM orders ORDER BY o_id DESC");
@@ -320,28 +351,19 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
-//! ORDERS EKLE - POST - SQL SORGUSU: INSERT INTO (phpMyAdmin ile %100 Uyumlu Kesin Sürüm)
+// ! 3. ORDERS EKLE - POST (Mükerrer/Çift kayıt kuralı temizlendi - %100 Uyumlu Tek Sürüm)
 app.post("/api/orders", async (req, res) => {
   try {
-    const { sepet, TC, firstName, lastName, email, phone, address, country, state, zip, amount } = req.body;
-
-    console.log("📥 Sunucuya Giriş Yapan Ham Kargo:", req.body);
-
-    // 1. Temel Sepet Doğrulaması
-    if (!sepet || sepet.length === 0) {
+    const data = req.body;
+    
+    if (!data.sepet || data.sepet.length === 0) {
       return res.status(400).json({ error: "Sepet boş geldi." });
     }
 
-    // 2. phpMyAdmin tablonuzdaki o_no için benzersiz sipariş numarası üretiyoruz
+    const urunIsimleri = data.sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
     const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
+    const tamIsim = ((data.firstName || "İsim") + " " + (data.lastName || "Soyisim")).trim();
 
-    // 3. Tablonuzdaki o_person için ad ve soyadı birleştiriyoruz
-    const tamIsim = ((firstName || "İsim") + " " + (lastName || "Soyisim")).trim();
-
-    // 4. Sepetteki ürün isimlerini tek bir metin (string) haline getiriyoruz
-    const urunIsimleri = sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
-
-    // KESİN DÜZELTME: Olmayan 'o_date' kolonu ve soru işareti sorgudan tamamen söküldü!
     const query = `
       INSERT INTO orders 
       (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
@@ -350,22 +372,19 @@ app.post("/api/orders", async (req, res) => {
 
     const values = [
       rastgeleSiparisNo,
-      TC ? String(TC).trim().substring(0, 11) : "11111111111",
+      data.TC ? String(data.TC).trim().substring(0, 11) : "11111111111",
       urunIsimleri,
-      tamIsim.substring(0, 30), // varchar(30) sınırı
-      email ? String(email).trim().toLowerCase().substring(0, 50) : null,
-      phone ? String(phone).trim().substring(0, 20) : null,
-      address ? String(address).trim().substring(0, 100) : "Adres Belirtilmedi", // varchar(100) sınırı
-      "Yeni Sipariş", // o_status başlangıç durumu (varchar30)
-      zip ? String(zip).trim().substring(0, 10) : "00000",
-      amount ? Number(amount) : 0
+      tamIsim.substring(0, 30),
+      data.email ? String(data.email).trim().toLowerCase().substring(0, 50) : null,
+      data.phone ? String(data.phone).trim().substring(0, 20) : null,
+      data.address ? String(data.address).trim().substring(0, 100) : "Adres Belirtilmedi",
+      "Yeni Sipariş",
+      data.zip ? String(data.zip).trim().substring(0, 10) : "00000",
+      data.amount ? Number(data.amount) : 0
     ];
 
-    console.log("💾 SQL'e Gönderilen Arındırılmış Paket Dizisi:", values);
-
     const [result] = await db.query(query, values);
-    console.log(`✅ Sipariş başarıyla phpMyAdmin veritabanına mühürlendi! Tablo ID: #${result.insertId}`);
-
+    
     return res.status(201).json({ 
       success: true, 
       message: "Sipariş eklendi.", 
@@ -379,17 +398,15 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-
-//! ORDERS GÜNCELLE - PUT - SQL SORGUSU: UPDATE SET (Admin Panelinden Durum Değiştirme)
+// ! 4. ORDERS GÜNCELLE - PUT
 app.put("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { status } = req.body; // Yönetim panelinden gelen yeni sipariş durumu (Örn: Hazırlanıyor, Tamamlandı)
+    const { status } = req.body;
 
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
     if (!status) return res.status(400).json({ error: "Hatalı veri geldi." });
 
-    // o_status kolonunu güncelleyen temiz SQL kuralı
     const [result] = await db.query(
       "UPDATE orders SET o_status = ? WHERE o_id = ?",
       [String(status).trim(), id]
@@ -407,14 +424,13 @@ app.put("/api/orders/:id", async (req, res) => {
   }
 });
 
-//! ORDERS SİL - DELETE - SQL SORGUSU: DELETE
+// ! 5. ORDERS SİL - DELETE
 app.delete("/api/orders/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "Geçersiz ID" });
 
     const [result] = await db.query("DELETE FROM orders WHERE o_id = ?", [id]);
-    console.log(`✅ #${id} numaralı sipariş başarıyla veritabanından silindi.`);
     return res.status(200).json("Sipariş silindi.");
   }
   catch (err) {
@@ -422,7 +438,6 @@ app.delete("/api/orders/:id", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
 
 
 
@@ -635,62 +650,7 @@ app.post('/api/getUsername', async (req, res) => {
 
 
 //? CHECKOUT - POST - SQL SORGUSU: INSERT INTO (phpMyAdmin Tablo Yapısıyla %100 Uyumlu Kesin Sürüm)
-app.post("/api/orders", async (req, res) => {
-  try {
-    const data = req.body;
-    
-    // 1. Sepetteki ürünlerin isimlerini temiz bir metin halinde birleştiriyoruz
-    let urunIsimleri = "Ürün Bilgisi Yok";
-    if (data.sepet && Array.isArray(data.sepet)) {
-      urunIsimleri = data.sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
-    }
-
-    // 2. Tablonuzdaki o_no (Sipariş Numarası) için rastgele benzersiz bir kod üretiyoruz
-    const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
-
-    // 3. Tablonuzdaki o_person için ad ve soyadı tek bir metin olarak birleştiriyoruz
-    const tamIsim = ((data.firstName || "İsimsiz") + " " + (data.lastName || "Soyisimsiz")).trim();
-
-    // phpMyAdmin tablonuzdaki kolon isimleriyle birebir eşleşen kusursuz SQL sorgusu
-    const query = `
-      INSERT INTO orders 
-      (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    // Tablonuzun veri türlerine ve sıralamasına tam oturan değerler dizisi
-    const values = [
-      rastgeleSiparisNo,                                 // 1. o_no (varchar10) - Boş kalamaz
-      data.TC ? String(data.TC).trim() : "00000000000",   // 2. o_tc (varchar11) - Boş kalamaz
-      urunIsimleri,                                      // 3. o_products (text) - Boş kalamaz
-      tamIsim,                                           // 4. o_person (varchar30) - Boş kalamaz
-      data.email ? String(data.email).trim().toLowerCase() : null, // 5. o_email (varchar50) - Evet NULL olabilir
-      data.phone ? String(data.phone).trim() : null,     // 6. o_phone (varchar20) - Evet NULL olabilir
-      data.address ? String(data.address).trim() : "Adres Belirtilmedi", // 7. o_adress (varchar100) - Boş kalamaz
-      "Yeni Sipariş",                                    // 8. o_status (varchar30) - Boş kalamaz
-      data.zip ? String(data.zip).trim() : "00000",      // 9. o_zip (varchar10) - Boş kalamaz
-      data.amount ? Number(data.amount) : 0              // 10. o_amount (decimal10,2) - Boş kalamaz
-    ];
-
-    console.log(`💾 SQL'e mühürlenecek sipariş numarası: ${rastgeleSiparisNo}`);
-
-    // Sorguyu asenkron (await) yapısıyla veritabanına gönderiyoruz
-    const [result] = await db.query(query, values);
-    
-    console.log(`✅ Sipariş başarıyla phpMyAdmin veritabanına mühürlendi! Tablo ID: #${result.insertId}`);
-    
-    return res.status(201).json({ 
-      success: true, 
-      message: "Siparişiniz başarıyla oluşturuldu.", 
-      orderId: result.insertId,
-      orderNo: rastgeleSiparisNo
-    });
-
-  } catch (e) {
-    console.error("❌ MYSQL SİPARİŞ KAYIT HATASI DETAYI:", e.message);
-    return res.status(400).json({ error: "Veritabanı kayıt hatası: " + e.message });
-  }
-});
+// yukarıda
 
 
 
@@ -713,45 +673,57 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-//? LOGIN - POST - SQL SORGUSU: SELECT, WHERE= id (Uyuşmazlıkları Çözülmüş Tam Uyumlu Hali)
+// ! 6. GİRİŞ YAPMA FONKSİYONU - POST (Hocanın İstediği JWT Şifreli Kesin Sürüm)
 app.post("/api/login", async (req, res) => {
-  const { email, pass } = req.body;
   try {
-    // u_active alanını da sorguya ekledik ve TRIM kullanarak boşluk riskini sıfırladık
-    const [rows] = await db.query(
-      "SELECT u_id, u_firstName, u_lastName, u_active, u_role, u_email FROM users WHERE TRIM(u_email) = ? AND u_pass = ?",
-      [email?.trim().toLowerCase(), pass]
+    const { email, pass } = req.body;
+    const inputEmail = String(email).trim().toLowerCase();
+
+    if (!inputEmail || !pass) {
+      return res.status(400).json({ success: false, message: "E-posta ve şifre zorunludur." });
+    }
+
+    // Veritabanından kullanıcıyı sorguluyoruz
+    const [rows] = await db.query("SELECT * FROM users WHERE LOWER(u_email) = ?", [inputEmail]);
+    
+    if (rows.length === 0) {
+      return res.status(401).json({ success: false, message: "E-posta adresi veya şifre hatalı!" });
+    }
+
+    const userData = rows[0];
+
+    // Şifre kontrolü (Sizin mevcut düz şifre eşleşme yapınıza sadık kalındı)
+    if (userData.u_pass !== String(pass)) {
+      return res.status(401).json({ success: false, message: "E-posta adresi veya şifre hatalı!" });
+    }
+
+    // 🌸 HOCANIN İSTEDİĞİ KRİTİK ADIM: Kullanıcının ID ve Rol bilgisini içeren şifreli token üretiyoruz
+    const token = jwt.sign(
+      { 
+        id: userData.u_id, 
+        role: String(userData.u_role || userData.u_active) 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: "24h" } // Anahtar 24 saat boyunca geçerli olacak
     );
 
-    console.log("Giriş denemesi sonuçları:", rows);
+    console.log(`🔑 #${userData.u_id} için şifreli JWT anahtarı üretildi.`);
 
-    // Kullanıcı bulundu mu kontrolü (Güvenli yöntem: rows.length > 0)
-    if (rows && rows.length > 0) {
-      const dbUser = rows[0];
+    // Token bilgisini, ismi ve rolü ön yüze paket halinde teslim ediyoruz
+    return res.status(200).json({
+      success: true,
+      message: "Giriş başarılı.",
+      token: token,
+      user: {
+        firstName: userData.u_firstName,
+        lastName: userData.u_lastName,
+        role: String(userData.u_role || userData.u_active)
+      }
+    });
 
-      // Vue 3 arayüzünün (App.vue) tam olarak beklediği formatta cevap dönüyoruz
-      res.status(200).json({
-        success: true,
-        user: {
-          u_id: dbUser.u_id,
-          u_firstName: dbUser.u_firstName,
-          u_lastName: dbUser.u_lastName,
-          u_email: dbUser.u_email,
-          u_active: dbUser.u_active, // Arayüzün beklediği aktiflik durumu
-          u_role: dbUser.u_role       // Rol bilgisi (0 veya 1)
-        }
-      });
-    } else {
-      // Kullanıcı bulunamadığında Vue kodunun okuyabilmesi için message alanı dönüyoruz
-      res.status(200).json({
-        success: false,
-        message: "E-posta adresi veya şifre hatalı!"
-      });
-    }
-  }
-  catch (err) {
-    console.error("Backend giriş hatası:", err);
-    res.status(500).json({ success: false, message: "Sistemsel bir sunucu hatası oluştu.", error: err.message });
+  } catch (err) {
+    console.error("❌ JWT Login Hatası:", err.message);
+    return res.status(500).json({ success: false, error: "Sunucu hatası oluştu." });
   }
 });
 

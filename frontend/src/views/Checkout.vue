@@ -170,7 +170,7 @@
                         </div>
                         <!-- Mesaj Yazısı -->
                         <h6 class="checkout-toast-text">
-                            Siparişiniz Başatıyla<br>Alınmıştır!
+                            Siparişiniz Başarıyla<br>Alınmıştır!
                         </h6>
                     </div>
                 </div>

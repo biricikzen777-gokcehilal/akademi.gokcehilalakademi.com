@@ -452,7 +452,7 @@ export default {
             showSuccessToast: false,
 
             // KESİN ÇÖZÜM: Referans kopmasını önlemek için sepeti nesne tabanlı listeye çevirdik
-                       // Temiz düz diziye geri döndük
+            // Temiz düz diziye geri döndük
             sepet: [],
 
             // KESİN DÜZELTME: Şablonunuzla tam uyumlu orijinal dizi yapısına geri döndük!
@@ -487,7 +487,7 @@ export default {
     mounted() {
         // addCart fonksiyon kilidi aynen kalıyor
         window.küreselSepeteEkle = this.addCart.bind(this);
-        
+
         // KESİN ÇÖZÜM: sepet dizisinin kendisini de tarayıcı ana hafızasına (window) mühürliyoruz!
         window.küreselSepetHafizasi = this.sepet;
         console.log("🚀 Küresel sepet dizisi tarayıcı hafızasına mühürlendi.");
@@ -707,7 +707,7 @@ export default {
             return isValid;
         },
 
-        // 6. ANA GİRİŞ FONKSİYONU (Tamamen Yerleşik Fetch API Uyumlu)
+        // 6. ANA GİRİŞ FONKSİYONU (Tamamen Yerleşik Fetch API Uyumlu - E-posta Mühürlü Sürüm)
         async login() {
             console.log("Giriş yap fonksiyonu tetiklendi. Seçili Rol:", this.selectedRole);
 
@@ -765,6 +765,24 @@ export default {
                     sessionStorage.setItem("role", dbActiveStatus); // '1' veya '0'
                     sessionStorage.setItem("userName", this.loggedInUserName);
 
+                    // Sipariş geçmişinin otomatik okuyabilmesi için eklenen altın mühür:
+                    localStorage.setItem('userEmail', userData.u_email || inputEmail);
+
+
+                    // ============================================================
+                    // 🚀 KRİTİK PROFESYONEL MÜHÜR:
+                    // user-orders.vue sayfasının e-postayı dinamik yakalayabilmesi için
+                    // veritabanından (SQL) dönen u_email veya inputEmail değerini kaydediyoruz.
+                    // ============================================================
+                    const gercekEmail = userData.u_email || userData.email || inputEmail;
+                    localStorage.setItem('userEmail', gercekEmail);
+                    sessionStorage.setItem('userEmail', gercekEmail);
+                    localStorage.setItem('user', JSON.stringify({
+                        firstName: userData.u_firstName,
+                        lastName: userData.u_lastName,
+                        email: gercekEmail
+                    }));
+
                     // Modalları kapatma işlemleri
                     document.getElementById('loginClose')?.click();
                     document.querySelector('#loginModal .btn-close')?.click();
@@ -793,6 +811,7 @@ export default {
                 this.errors.general = "Sistemsel bir hata oluştu veya sunucuya bağlanılamadı.";
             }
         },
+
 
         // Aktif Arama Fonksiyonu
         search() {
@@ -829,7 +848,7 @@ export default {
             window.location.reload(); // Değişikliklerin arayüze anında yansıması için sayfayı yeniler
         },
 
-              // 9. Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
+        // 9. Ürünü sepete ekleyen ve lüks pembe toast bildirimini tetikleyen merkezi App.vue fonksiyonu
         addCart(product) {
             console.log("=== ASIL APP.VUE TETİKLENDİ ===", product);
 
@@ -862,8 +881,6 @@ export default {
                 this.showCartToast = false;
             }, 2500);
         },
-
-
 
         provide() {
             return {

@@ -21,12 +21,18 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- :key="order.id" orijinal eşleşmene dokunulmadı -->
                         <tr v-for="(order, index) in orders" :key="order.id" class="p-0 m-0">
                             <th scope="row" class="text-secondary fw-normal p-0 m-0 text-center">#{{ order.o_id }}</th>
                             <td class="p-0 m-0 fw-medium text-primary ps-1">{{ order.o_no }}</td>
                             <td class="p-0 m-0 fw-semibold text-success">{{ Number(order.o_amount || 0).toFixed(2) }}₺
                             </td>
-                            <td class="p-0 m-0 text-secondary">{{ order.o_date }}</td>
+                            
+                            <!-- 1. DÜZELTME: Tablodaki tarih alanı veritabanındaki o_created_at verisi ile güncellendi -->
+                            <td class="p-0 m-0 text-secondary">
+                                {{ order.o_created_at ? new Date(order.o_created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Tarih Yok' }}
+                            </td>
+
                             <td class="p-0 m-0">
                                 <select
                                     class="form-select form-control-sm border-light-subtle rounded-1 py-0 px-1 shadow-none"
@@ -39,13 +45,11 @@
                             </td>
                             <td class="text-end p-0 m-0" style="padding-right: 10px !important;">
                                 <div class="d-inline-flex gap-1">
-                                    <!-- TASARIM ASLA DEĞİŞMEDİ: Sadece fonksiyona durum kutusunu da okuyabilmesi için tüm satır nesnesi paslandı -->
                                     <button class="btn btn-sm btn-outline-primary py-0_5 px-2 rounded-1"
                                         style="font-size: 12px; height: 26px; line-height: 1;"
                                         @click="updateOrder(order)">
                                         Güncelle
                                     </button>
-
 
                                     <button class="btn btn-sm btn-outline-danger py-0_5 px-2 rounded-1"
                                         style="font-size: 12px; height: 26px; line-height: 1;"
@@ -68,7 +72,7 @@
             </div>
         </div>
 
-        <!-- 1. DÜZELTİLDİ: DETAYLAR MODALI ARTIK TELEPORT İLE KESİNLİKLE EN ÖNDE AÇILIR -->
+        <!-- DETAYLAR MODALI (Orijinal yapısı tamamen korundu) -->
         <Teleport to="body">
             <div v-if="isDetailsOpen" class="custom-modal-backdrop" @click.self="closeDetails">
                 <div class="custom-modal-dialog">
@@ -100,8 +104,11 @@
                                 <div class="col-8 text-success fw-bold">{{ Number(orders[detailID].o_amount ||
                                     0).toFixed(2) }} ₺</div>
 
+                                <!-- 2. DÜZELTME: Modal içindeki tarih alanı da o_created_at verisi ile güncellendi -->
                                 <div class="col-4 text-muted">Sipariş Tarihi:</div>
-                                <div class="col-8 text-dark">{{ orders[detailID].o_date }}</div>
+                                <div class="col-8 text-dark">
+                                    {{ orders[detailID].o_created_at ? new Date(orders[detailID].o_created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Tarih Yok' }}
+                                </div>
 
                                 <div class="col-4 text-muted">Durumu:</div>
                                 <div class="col-8">
@@ -116,6 +123,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="border-top p-3 bg-light rounded-bottom-2 d-flex justify-content-end"
                             style="font-size: 13px;">
                             <button type="button"
@@ -128,6 +136,7 @@
         </Teleport>
     </div>
 </template>
+
 
 <script>
 export default {
