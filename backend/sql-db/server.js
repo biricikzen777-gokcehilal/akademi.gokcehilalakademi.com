@@ -716,8 +716,6 @@ app.post('/api/getUsername', async (req, res) => {
 // yukarıda
 
 
-
-
 //? REGISTER - POST - SQL SORGUSU: INSERT INTO
 app.post("/api/register", async (req, res) => {
   try {
@@ -790,6 +788,55 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+// ! TOKEN İLE KULLANICI BİLGİLERİNİ GETİRME
+app.post("/api/get-profile", async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(401).json({ message: "Token bulunamadı." });
+
+    // Token'ı çözüp içindeki gerçek kullanıcı ID'sini alıyoruz
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const [rows] = await db.query(
+      "SELECT u_firstName, u_lastName, u_email, u_tel FROM users WHERE u_id = ?",
+      [decoded.id]
+    );
+
+    if (rows.length === 0) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    return res.status(401).json({ message: "Geçersiz veya süresi dolmuş token." });
+  }
+});
+
+// ! TOKEN İLE PROFİL VE ŞİFRE GÜNCELLEME
+app.put("/api/update-profile", async (req, res) => {
+  try {
+    const { token, firstName, lastName, email, tel, newPass } = req.body;
+    if (!token) return res.status(401).json({ message: "Token bulunamadı." });
+
+    // Token'dan kullanıcının gerçek ID'sini çıkarıyoruz
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (newPass && newPass.trim().length >= 6) {
+      // Yeni şifre girildiyse şifreyle birlikte güncelle
+      await db.query(
+        "UPDATE users SET u_firstName = ?, u_lastName = ?, u_email = ?, u_tel = ?, u_pass = ? WHERE u_id = ?",
+        [firstName, lastName, email, tel, newPass.trim(), decoded.id]
+      );
+    } else {
+      // Yeni şifre boşsa mevcut şifreyi koruyarak diğer bilgileri güncelle
+      await db.query(
+        "UPDATE users SET u_firstName = ?, u_lastName = ?, u_email = ?, u_tel = ? WHERE u_id = ?",
+        [firstName, lastName, email, tel, decoded.id]
+      );
+    }
+
+    return res.status(200).json({ success: true, message: "Profiliniz başarıyla güncellendi." });
+  } catch (err) {
+    console.error("Profil güncelleme hatası:", err.message);
+    return res.status(500).json({ success: false, message: "Güncelleme sırasında hata oluştu." });
+  }
+});
 
 
 //------------------------------------------------------------------------------------------------------------

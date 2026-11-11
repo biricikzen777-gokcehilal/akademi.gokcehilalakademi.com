@@ -51,6 +51,14 @@
                         style="width: 80%;" :style="[state === 'messages' ? activeStyle : passiveStyle]">
                         <i class="bi bi-envelope me-2"></i> Mesajlar
                     </button>
+
+                    <!-- PROFİLİM BUTONU -->
+                    <button @click="setProfile()"
+                        class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
+                        style="width: 80%;" :style="[state === 'profile' ? activeStyle : passiveStyle]">
+                        <i class="bi bi-person-gear me-2"></i> Profilim
+                    </button>
+
                 </div>
             </div>
 
@@ -89,18 +97,24 @@
                 <div v-if="state === 'users'">
                     <adminUsers />
                 </div>
-                
+
                 <div v-if="state === 'products'">
                     <adminProducts />
                 </div>
-                
+
                 <div v-if="state === 'orders'">
                     <adminOrders />
                 </div>
-                
+
                 <div v-if="state === 'messages'">
                     <adminMessages />
                 </div>
+
+                <div v-else-if="state === 'profile'">
+                    <userProfile />
+                </div>
+
+
             </div>
 
             <!-- Alt Sabit Bilgi Çubuğu -->
@@ -119,6 +133,8 @@ import adminProducts from '@/components/admin-products.vue'
 import adminOrders from '@/components/admin-orders.vue'
 import adminUsers from '@/components/admin-users.vue'
 import adminMessages from '@/components/admin-messages.vue'
+import adminProfile from '@/components/admin-profile.vue'
+
 
 export default {
     name: 'AdminView',
@@ -149,7 +165,7 @@ export default {
                 fontSize: '12px',
                 transition: 'all 0.2s ease'
             },
-            isEditModalOpen: false, 
+            isEditModalOpen: false,
             editUser: {
                 id: null,
                 firstName: '',
@@ -157,7 +173,15 @@ export default {
                 email: '',
                 tel: '',
                 role: '0'
-            }
+            },
+            profileForm: {
+                firstName: "",
+                lastName: "",
+                email: "",
+                tel: "",
+                newPass: ""
+            },
+
         };
     },
     mounted() {
@@ -180,13 +204,34 @@ export default {
     },
     methods: {
         checkAdminSession() {
-            let id = sessionStorage.getItem("userId");
-            if (!id || id === "undefined" || id === "null") {
-                sessionStorage.setItem("userId", "1");
-                id = "1";
+            const token = sessionStorage.getItem("token");
+
+            if (!token) {
+                this.$router.push("/");
+                return;
             }
-            this.getUsername(id);
+
+            try {
+                // DÜZELTİLDİ: Token'ın ikinci parçası olan payload kısmını [1] indeksi ile alıyoruz
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join('')));
+
+                if (payload && payload.id) {
+                    this.getUsername(payload.id); // (User.vue içinde burası this.currentUserId = payload.id; olmalı)
+                } else {
+                    this.$router.push("/");
+                }
+            } catch (e) {
+                console.error("Admin token çözme hatası:", e);
+                sessionStorage.clear();
+                this.$router.push("/");
+            }
         },
+
+
         async getUsername(verifiedId) {
             try {
                 const res = await fetch(`${this.baseUrl}/api/getUsername/${verifiedId}`, {
@@ -196,7 +241,7 @@ export default {
                 });
                 if (!res.ok) throw new Error("Kullanıcı adı sunucudan alınamadı.");
                 const data = await res.json();
-                
+
                 if (data) {
                     // Backend'den dönen veri nesne ise .name alanını, düz string ise direkt kendisini alıyoruz
                     this.Username = data.name || (typeof data === 'string' ? data : "Admin");
@@ -207,14 +252,48 @@ export default {
             }
         },
         setProfile() {
-            alert("Profil ayarları modülü yakında aktif edilecek.");
+            this.state = 'profile';
         },
+
+        async updateProfile() {
+            const token = sessionStorage.getItem("token");
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${this.baseUrl}/api/update-profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token,
+                        firstName: this.profileForm.firstName,
+                        lastName: this.profileForm.lastName,
+                        email: this.profileForm.email,
+                        tel: this.profileForm.tel,
+                        newPass: this.profileForm.newPass
+                    })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert("Profil bilgileriniz başarıyla güncellendi.");
+                    this.Username = `${this.profileForm.firstName} ${this.profileForm.lastName}`;
+                    sessionStorage.setItem("userName", this.Username);
+                    this.profileForm.newPass = "";
+                } else {
+                    alert(result.message || "Güncelleme başarısız oldu.");
+                }
+            } catch (err) {
+                console.error("Profil güncelleme hatası:", err);
+                alert("Sunucu hatası oluştu.");
+            }
+        },
+
         logout() {
             sessionStorage.clear();
             // Sayfa yönlendirmesini güvenli hale getirmek için yönlendirmeden hemen önce navbarı görünür yapıyoruz
             const mainNavbar = document.querySelector('.main-nav-container');
             if (mainNavbar) mainNavbar.style.display = '';
-            
+
             this.$router.push("/");
         }
     }

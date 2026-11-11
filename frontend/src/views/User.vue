@@ -54,6 +54,14 @@
                             style="width: 80%;" :style="[state === 'orders' ? activeStyle : passiveStyle]">
                             <i class="bi bi-bag-check me-2"></i> Siparişlerim
                         </button>
+
+                        <!-- PROFİLİM BUTONU -->
+                        <button @click="setProfile()"
+                            class="btn fw-semibold text-start shadow-sm d-flex align-items-center py-2 px-3 text-truncate"
+                            style="width: 80%;" :style="[state === 'profile' ? activeStyle : passiveStyle]">
+                            <i class="bi bi-person-gear me-2"></i> Profilim
+                        </button>
+
                     </div>
                 </div>
 
@@ -119,6 +127,12 @@
                     <userOrders />
                 </div>
 
+                <div v-else-if="state === 'profile'">
+                    <userProfile />
+                </div>
+
+
+
             </div>
 
         </div>
@@ -132,6 +146,8 @@ import userEducations from '@/components/user-educations.vue'
 import userSertificates from '@/components/user-sertificates.vue'
 import userOrders from '@/components/user-orders.vue'
 import userProducts from '@/components/user-products.vue'
+import userProfile from '@/components/user-profile.vue'
+
 
 export default {
     name: 'UserView',
@@ -141,9 +157,11 @@ export default {
         userOrders,
         userProducts
     },
+
     data() {
         return {
-            state: "courses", 
+            state: "courses",
+            currentUserId: null, // ID artık sessionStorage'daki userId'den değil, şifreli token'dan çözülecek
             Username: sessionStorage.getItem("userName") || "Kullanıcı",
             baseUrl: "http://localhost:3001",
             activeStyle: {
@@ -161,38 +179,105 @@ export default {
                 borderRadius: '5px',
                 fontSize: '13px',
                 transition: 'all 0.2s ease'
-            }
+            },
+            profileForm: {
+                firstName: "",
+                lastName: "",
+                email: "",
+                tel: "",
+                newPass: ""
+            },
         };
+
     },
+
     mounted() {
         // KORUNDU: Yeni eklediğimiz dış navbar sarmalayıcısını ve footer'ı yakalayıp kullanıcı panelinde tamamen gizliyoruz
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        
+
         if (mainNavbar) mainNavbar.style.display = 'none';
         if (footer) footer.style.display = 'none';
-        
+
         this.checkAdminSession();
     },
     unmounted() {
         // KORUNDU: Kullanıcı panelinden çıkıldığında navbar ve footer otomatik olarak geri gelir
         const mainNavbar = document.querySelector('.main-nav-container');
         const footer = document.querySelector('footer');
-        
+
         if (mainNavbar) mainNavbar.style.display = '';
         if (footer) footer.style.display = '';
     },
+
     methods: {
-        // DÜZELTİLDİ: mounted kancasında çağrılan ancak tanımlı olmadığı için sayfayı kilitleyen oturum kontrol fonksiyonu eklendi
         checkAdminSession() {
-            let id = sessionStorage.getItem("userId");
-            if (!id || id === "undefined" || id === "null") {
-                sessionStorage.setItem("userId", "1");
+            const token = sessionStorage.getItem("token");
+
+            if (!token) {
+                this.$router.push("/");
+                return;
+            }
+
+            try {
+                // DÜZELTİLDİ: Token'ın ikinci parçası olan payload kısmını [1] indeksi ile alıyoruz
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join('')));
+
+                if (payload && payload.id) {
+                    this.getUsername(payload.id); // (User.vue içinde burası this.currentUserId = payload.id; olmalı)
+                } else {
+                    this.$router.push("/");
+                }
+            } catch (e) {
+                console.error("Admin token çözme hatası:", e);
+                sessionStorage.clear();
+                this.$router.push("/");
             }
         },
+
+
         setProfile() {
-            alert("Profil ayarları modülü yakında aktif edilecektir.");
+            this.state = 'profile';
         },
+
+
+        async updateProfile() {
+            const token = sessionStorage.getItem("token");
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${this.baseUrl}/api/update-profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token,
+                        firstName: this.profileForm.firstName,
+                        lastName: this.profileForm.lastName,
+                        email: this.profileForm.email,
+                        tel: this.profileForm.tel,
+                        newPass: this.profileForm.newPass
+                    })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert("Profil bilgileriniz başarıyla güncellendi.");
+                    this.Username = `${this.profileForm.firstName} ${this.profileForm.lastName}`;
+                    sessionStorage.setItem("userName", this.Username);
+                    this.profileForm.newPass = "";
+                } else {
+                    alert(result.message || "Güncelleme başarısız oldu.");
+                }
+            } catch (err) {
+                console.error("Profil güncelleme hatası:", err);
+                alert("Sunucu hatası oluştu.");
+            }
+        },
+
         logout() {
             sessionStorage.clear();
             alert("Başarıyla çıkış yapıldı.");
