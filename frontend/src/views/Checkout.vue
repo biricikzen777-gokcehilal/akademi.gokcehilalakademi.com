@@ -1,7 +1,8 @@
 <template>
-    <div class="container py-5">
+    <div class="container py-5" style="font-family: sans-serif;">
         <main>
 
+            <!-- MAĞAZA ÜST BAŞLIK -->
             <div class="text-center mb-5">
                 <h1 class="h2 fw-bold mb-3" style="color: #008000;">Ödeme Sayfası</h1>
                 <p class="lead text-muted">Lütfen fatura bilgilerinizi ve ödeme yönteminizi eksiksiz doldurunuz.</p>
@@ -50,38 +51,56 @@
                     <h4 class="mb-3 fw-bold">Fatura Adresi</h4>
                     <form class="needs-validation" @submit.prevent="checkOut">
                         <div class="row g-3">
+                            <!-- TC Kimlik ve Hata Alanı -->
                             <div class="col-12">
                                 <label class="form-label">TC Kimlik No:</label>
                                 <input type="text" class="form-control" placeholder="Fatura için zorunludur."
                                     v-model="order[0].TC" required />
+                                <div v-if="checkoutErrors.TC" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.TC }}</div>
                             </div>
 
+                            <!-- Ad ve Hata Alanı -->
                             <div class="col-sm-6">
                                 <label class="form-label">Ad:</label>
                                 <input type="text" class="form-control" v-model="order[0].firstName" required />
+                                <div v-if="checkoutErrors.firstName" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.firstName }}</div>
                             </div>
 
+                            <!-- Soyad Hata Alanı -->
                             <div class="col-sm-6">
                                 <label class="form-label">Soyad:</label>
                                 <input type="text" class="form-control" v-model="order[0].lastName" required />
+                                <div v-if="checkoutErrors.lastName" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.lastName }}</div>
                             </div>
 
+                            <!-- E-posta Hata Alanı -->
                             <div class="col-6">
                                 <label class="form-label">E-posta</label>
                                 <input type="email" class="form-control" placeholder="ornek@example.com"
                                     v-model="order[0].email" />
+                                <div v-if="checkoutErrors.email" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.email }}</div>
                             </div>
 
+                            <!-- Telefon Hata Alanı -->
                             <div class="col-6">
                                 <label class="form-label">Telefon:</label>
                                 <input type="tel" class="form-control" placeholder="+90(555)555 55 55"
                                     v-model="order[0].phone" />
+                                <div v-if="checkoutErrors.phone" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.phone }}</div>
                             </div>
 
+                            <!-- Adres Hata Alanı -->
                             <div class="col-12">
                                 <label class="form-label">Adres:</label>
                                 <textarea class="form-control" rows="3" placeholder="Adresinizi ayrıntılı giriniz..."
                                     v-model="order[0].address" required></textarea>
+                                <div v-if="checkoutErrors.address" class="text-danger small mt-1 fw-medium">{{
+                                    checkoutErrors.address }}</div>
                             </div>
 
                             <div class="col-md-5">
@@ -124,7 +143,7 @@
                             </div>
                         </div>
 
-                        <!-- Sizin orijinal v-model="payment[0].xxx" yapınıza sadık kalındı -->
+                        <!-- Kredi Kartı Bilgileri -->
                         <div class="row gy-3 custom-card p-3 bg-light rounded border">
                             <div class="col-md-6">
                                 <label class="form-label">Kart Sahibi:</label>
@@ -149,7 +168,8 @@
                         </div>
 
                         <hr class="my-4" />
-                        <!-- İnce kibar buton yapısı -->
+
+                        <!-- Siparişi Güvenle Tamamla Butonu -->
                         <button class="btn btn-kibar-buyuk-yesil w-100" type="submit">
                             <i class="bi bi-shield-check me-2"></i> Siparişi Güvenle Tamamla
                         </button>
@@ -180,7 +200,14 @@
     </div>
 </template>
 
+
 <script>
+// 🚀 MERKEZİ MOTOR ENTEGRASYONU: validation.js süzgecini içe aktarıyoruz
+
+import { validateForm } from '../validation.js';
+
+
+
 export default {
     name: 'CheckoutPage',
     inject: [], // Enjeksiyon kaldırıldı
@@ -196,10 +223,20 @@ export default {
             baseUrl: "http://localhost:3001",
 
             // Lüks kare sipariş onay toast tetikleyicisi
-            showSuccessToast: false
+            showSuccessToast: false,
+
+            // 🚀 HOCANIN İSTEDİĞİ MERKEZİ VALİDASYON HATA HAVUZU
+            checkoutErrors: {
+                TC: "",
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                address: ""
+            }
         };
     },
-       
+
     computed: {
         sepet() {
             return window.küreselSepetHafizasi || [];
@@ -214,25 +251,37 @@ export default {
     },
 
     methods: {
-               // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
+        // API'ye sipariş verilerini gönderen kurşun geçirmez fonksiyon
         async checkOut() {
+            // Her gönderimde hata havuzunu sıfırlıyoruz
+            this.checkoutErrors = { TC: "", firstName: "", lastName: "", email: "", phone: "", address: "" };
+
             if (!this.sepet || this.sepet.length === 0) return;
 
-            try {
-                // Sizin orijinal dizi yapınızın ilk elemanına kesin erişim
-                 const orderData = this.order[0] || this.order; 
-                
-                if (!orderData) {
-                    console.error("Fatura adresi verisi bulunamadı.");
-                    return;
-                }
+            // Sizin orijinal dizi yapınızın ilk elemanına kesin erişim
+            const orderData = this.order[0] || this.order;
 
+            if (!orderData) {
+                console.error("Fatura adresi verisi bulunamadı.");
+                return;
+            }
+
+            // 🌸 MERKEZİ MOTOR MÜHÜRÜ: validation.js içerisindeki checkout fonksiyonuna dizinin ilk elemanını paslıyoruz
+            const result = validateForm.checkout(orderData);
+
+            // Eğer kural ihlali varsa hata mesajlarını local havuzumuza doldurup işlemi kesiyoruz
+            if (!result.isValid) {
+                this.checkoutErrors = { ...this.checkoutErrors, ...result.errors };
+                return;
+            }
+
+            try {
                 console.log("Backend'e gönderilen ham sipariş kargosu:", orderData);
 
                 // TC alanına harf girilirse sadece sayıları ayıklıyoruz
                 let temizTC = String(orderData.TC || "").replace(/\D/g, "");
                 if (temizTC.length !== 11) {
-                    temizTC = "22222222222"; 
+                    temizTC = "22222222222";
                 }
 
                 // o_state kolonu varchar(10) olduğu için seçilen şehri maksimum 10 karakterde buduyoruz
@@ -249,8 +298,6 @@ export default {
                     };
                 });
 
-                // KESİN DÜZELTME: Adres alanındaki (.substring(0, 10)) kısıtlaması tamamen kaldırıldı!
-                // Kullanıcının yazdığı uzun ve Türkçe karakterli adres olduğu gibi sunucuya taşınacak.
                 const payload = {
                     sepet: temizSepetDizisi,
                     TC: String(temizTC),
@@ -258,7 +305,7 @@ export default {
                     lastName: String(orderData.lastName || "Soyisim").trim(),
                     email: orderData.email ? String(orderData.email).trim() : "",
                     phone: orderData.phone ? String(orderData.phone).trim() : "",
-                    address: String(orderData.address || "Adres Belirtilmedi").trim(), // Karakter budama kilidi söküldü!
+                    address: String(orderData.address || "Adres Belirtilmedi").trim(),
                     country: String(orderData.country || "Türkiye"),
                     state: String(temizSehir),
                     zip: orderData.zip ? String(orderData.zip).trim().substring(0, 10) : "00000",
@@ -267,7 +314,6 @@ export default {
 
                 console.log("🚀 Sunucuya Gönderilen Arındırılmış Paket:", payload);
 
-                // Backend'deki orders tablonuzun kolon yapılarına tam uyumlu istek paketi
                 const response = await fetch(`${this.baseUrl}/api/orders`, {
                     method: "POST",
                     headers: {
@@ -275,26 +321,25 @@ export default {
                     },
                     body: JSON.stringify(payload)
                 });
-                
+
                 if (!response.ok) {
-                    // Sunucudan fırlatılan gerçek SQL hatasını yakalamak için cevabı metne çeviriyoruz
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.error || "Sipariş oluşturma isteği sunucu tarafından reddedildi.");
                 }
-                
+
                 const responseData = await response.json();
 
                 if (responseData) {
                     console.log("Sipariş başarıyla backend ve SQL'e mühürlendi:", responseData);
-                    
+
                     // YEŞİL LÜKS KARE ONAY TOASTI ANINDA EKRANA GELİR
                     this.showSuccessToast = true;
 
                     // Sipariş onaylandıktan sonra sepet dizisini ve localStorage hafızasını tamamen sıfırlıyoruz
-                    this.sepet.length = 0; 
+                    this.sepet.length = 0;
                     localStorage.removeItem("gokceSepet");
                     if (window.küreselSepetHafizasi) window.küreselSepetHafizasi = [];
-                    
+
                     // 2.5 saniye sonra bildirimi kapatıp kullanıcıyı anasayfa vitrinine uçurur
                     setTimeout(() => {
                         this.showSuccessToast = false;
@@ -307,19 +352,14 @@ export default {
             }
         },
 
-
         // Ödeme sayfasındaki sepet listesinden tekil ürün silme fonksiyonu
         deleteItem(index) {
             this.sepet.splice(index, 1);
-            // Sepetten ürün silindiğinde tarayıcı hafızasındaki yedeği de anlık güncelliyoruz!
             localStorage.setItem("gokceSepet", JSON.stringify(this.sepet));
-
-
         }
     }
 };
 </script>
-
 
 <style scoped>
 /* 🌸 Sepet Başlık ve Badge Renkleri (Sepet.vue ile tam uyumlu) */
@@ -400,7 +440,7 @@ export default {
     box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.15) !important;
 }
 
-/* İkon Çemberi - Başarı Yeşili (#28a745) */
+/* İkon Çemberi - Başarı Yeşili (#28a745) - Yarım Kalan Etiket Tamamen Onarıldı */
 .checkout-toast-icon-wrapper {
     width: 60px;
     height: 60px;
@@ -409,8 +449,7 @@ export default {
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
-    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
-    /* Yeşil parlama efekti */
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3); /* Yeşil parlama efekti */
 }
 
 .checkout-toast-icon-wrapper i {

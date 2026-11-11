@@ -18,20 +18,25 @@
             <!-- Sağ Taraf: İletişim Formu -->
             <div class="col-lg-6">
                 <form class="row g-4" @submit.prevent="sendMessage()">
+                    <!-- Ad Alanı ve Hata Bildirimi -->
                     <div class="col-md-6">
                         <label class="form-label">Ad *</label>
                         <input v-model="newMessage.firstName" type="text" class="form-control custom-input" required>
+                        <div v-if="contactErrors.name" class="text-danger small mt-1 fw-medium">{{ contactErrors.name }}</div>
                     </div>
 
+                    <!-- Soyad Alanı -->
                     <div class="col-md-6">
                         <label class="form-label">Soyad *</label>
                         <input v-model="newMessage.lastName" type="text" class="form-control custom-input" required>
                     </div>
 
+                    <!-- Email Alanı ve Hata Bildirimi -->
                     <div class="col-md-12">
                         <label class="form-label">Email *</label>
                         <input v-model="newMessage.email" type="email" class="form-control custom-input"
                             placeholder="example@hotmail.com" required>
+                        <div v-if="contactErrors.email" class="text-danger small mt-1 fw-medium">{{ contactErrors.email }}</div>
                     </div>
 
                     <div class="col-md-4">
@@ -57,9 +62,11 @@
                         </select>
                     </div>
 
+                    <!-- Mesaj Alanı ve Hata Bildirimi -->
                     <div class="col-md-12">
                         <label class="form-label">Mesaj *</label>
                         <textarea v-model="newMessage.message" class="form-control custom-input" rows="4" required></textarea>
+                        <div v-if="contactErrors.message" class="text-danger small mt-1 fw-medium">{{ contactErrors.message }}</div>
                     </div>
 
                     <div class="col-12">
@@ -101,6 +108,9 @@
 </template>
 
 <script>
+// 🚀 MERKEZİ MOTOR ENTEGRASYONU: validation.js süzgecini tek klasör yukarıdan içe aktarıyoruz
+import { validateForm } from '../validation.js';
+
 export default {
     name: 'ContactComponent',
     inject: ['products', 'sepet'],
@@ -117,11 +127,35 @@ export default {
                 check: false
             },
             status: "",
-            baseUrl: "http://localhost:3001"
+            baseUrl: "http://localhost:3001",
+
+            // 🚀 HOCANIN İSTEDİĞİ MERKEZİ VALİDASYON HATA HAVUZU
+            contactErrors: {
+                name: "",
+                email: "",
+                message: ""
+            }
         };
     },
     methods: {
         async sendMessage() {
+            // Her tıklamada hata havuzunu temizliyoruz
+            this.contactErrors = { name: "", email: "", message: "" };
+
+            // validation.js içindeki contact süzgecinin anladığı form verilerini hazırlıyoruz
+            const tamIsim = `${this.newMessage.firstName} ${this.newMessage.lastName}`.trim();
+            
+            // 🌸 MERKEZİ MOTOR MÜHÜRÜ: validation.js içerisindeki contact fonksiyonunu tetikliyoruz
+            const result = validateForm.contact(tamIsim, this.newMessage.email, this.newMessage.message);
+
+            // Eğer kural ihlali varsa hata mesajlarını local havuzumuza doldurup işlemi kesiyoruz
+            if (!result.isValid) {
+                this.contactErrors.name = result.errors.name;
+                this.contactErrors.email = result.errors.email;
+                this.contactErrors.message = result.errors.message;
+                return;
+            }
+
             this.status = "isleniyor";
             try {
                 const res = await fetch(`${this.baseUrl}/api/messages`, {
@@ -144,6 +178,7 @@ export default {
 
                 this.status = "basarili";
 
+                // Form girdilerini başarı sonrası sıfırlıyoruz
                 this.newMessage = {
                     firstName: "",
                     lastName: "",
@@ -223,7 +258,7 @@ export default {
 
 /* İstediğiniz Düz Yeşil Buton (Gradientsiz / Gölgesiz) */
 .btn-flat-success {
-    background-color: #017801  ;
+    background-color: #017801;
     color: #fff;
     font-weight: 600;
     padding: 12px;
@@ -233,7 +268,7 @@ export default {
     transition: background-color 0.2s ease;
 }
 .btn-flat-success:hover {
-    background-color: #017801 ;
+    background-color: #017801;
     color: #fff;
 }
 .btn-flat-success:disabled {
@@ -256,5 +291,6 @@ export default {
     border: 1px solid transparent;
 }
 </style>
+
 
 

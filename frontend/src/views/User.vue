@@ -83,7 +83,7 @@
             <!-- ========================================================
                 2. SAĞ DİNAMİK İÇERİK PANELİ (SIHİRLİ ENTEGRASYON)
                 ======================================================== -->
-            <div class="col-12 col-md-10 offset-md-2 p-4" style="min-height: 100vh; background-color: #f8f9fa;">
+            <div class="col-12 col-md-10 offset-md-2 p-4" style="min-height: 100vh; background-color: white;">
 
                 <!-- Üst Hoş Geldiniz Karşılama Çubuğu -->
                 <div

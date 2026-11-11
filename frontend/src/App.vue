@@ -6,7 +6,7 @@ import { reactive } from 'vue';
 import { Modal } from 'bootstrap/dist/js/bootstrap.min';
 import { ref } from 'vue';
 import axios from 'axios';
-
+import { validateForm } from '@/validation.js';
 
 
 </script>
@@ -509,7 +509,6 @@ export default {
         }
     },
 
-
     provide() {
         return {
             // Sepet dizisini alt bileşenlere (Product.vue ve sepet.vue) reaktif olarak dağıtır
@@ -520,7 +519,6 @@ export default {
     computed: {
         // Computed metotlar ihtiyaç halinde buraya tanımlanacaktır
     },
-
 
     methods: {
         // 1. ŞİFRE EŞLEŞME KONTROLÜ (HTML'deki user.pass kök bağına göre eşitlendi)
@@ -542,118 +540,122 @@ export default {
             }
         },
 
-        // 2. FORM DOĞRULAMA MOTORU (Ad, soyad, email, tel, check için user[0] yapısı korunuyor)
-        // 2. Birleştirilmiş ve Hatalardan Arındırılmış Form Doğrulama Motoru (Regex Düzeltildi)
+        // 🚀 2. FORM DOĞRULAMA MOTORU (Hocanın İstediği Merkezi validation.js Bağlantılı Sürüm)
         formValidation() {
+            // Her doğrulama başında hata mesajı havuzunu temizliyoruz
             this.errors = { firstName: '', lastName: '', email: '', tel: '', pass: '', repeatPass: '', check: '', general: '' };
-            let isValid = true;
 
             // Sizin orijinal yapınız olan dizi içi ilk nesneye kesin erişim [0]
             const userData = this.user[0];
+            const userPassword = this.user.pass || '';
+            const userRepeatPassword = this.user.repeatPass || '';
 
             if (!userData) {
                 this.errors.general = "Kullanıcı verisi yüklenemedi.";
                 return false;
             }
 
-            // İsim ve Soyisim Kontrolü
-            if (!userData.firstName || userData.firstName.trim().length < 2) {
-                this.errors.firstName = "Adınız en az 2 karakter olmalıdır.";
-                isValid = false;
-            }
-            if (!userData.lastName || userData.lastName.trim().length < 2) {
-                this.errors.lastName = "Soyadınız en az 2 karakter olmalıdır.";
-                isValid = false;
-            }
+            // 🌸 MERKEZİ MOTOR MÜHÜRÜ: validation.js içerisindeki register süzgecine form verilerini paslıyoruz
+            const result = validateForm.register(userData, userPassword, userRepeatPassword);
 
-            // E-posta Kontrolü (Kaçış karakterlerinden arındırılmış kesin Regex)
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!userData.email || !emailRegex.test(userData.email.trim())) {
-                this.errors.email = "Lütfen geçerli bir e-posta adresi giriniz.";
-                isValid = false;
-            }
-
-            // Telefon Numarası Kontrolü (Kaçış karakterlerinden arındırılmış kesin Regex)
-            if (!userData.tel) {
-                this.errors.tel = "Telefon numarası boş bırakılamaz.";
-                isValid = false;
-            } else {
-                const telClean = userData.tel.toString().replace(/\s+/g, '');
-                const telRegex = /^5[0-9]{9}$/;
-                if (telClean.length !== 10 || !telRegex.test(telClean)) {
-                    this.errors.tel = "Telefon numarası başında 0 olmadan 10 hane olmalıdır.";
-                    isValid = false;
-                }
-            }
-
-            // Şifre Durum Kontrolü
-            this.checkPasswordMatch();
-            if (this.errors.pass || this.errors.repeatPass) {
-                isValid = false;
-            }
-
-            // Onay Kutusu Kontrolü
-            if (!userData.check) {
-                this.errors.check = "Lütfen şartları onaylayın.";
-                isValid = false;
-            }
-
-            if (!isValid) {
+            // Eğer dışarıdaki dosyada bir kural ihlali yakalandıysa, mesajları doğrudan senin local errors nesnene doldurur
+            if (!result.isValid) {
+                this.errors.firstName = result.errors.firstName;
+                this.errors.lastName = result.errors.lastName;
+                this.errors.email = result.errors.email;
+                this.errors.tel = result.errors.tel;
+                this.errors.pass = result.errors.pass;
+                this.errors.repeatPass = result.errors.repeatPass;
+                this.errors.check = result.errors.check;
+                
                 this.errors.general = "Lütfen formdaki hataları düzelterek tekrar deneyiniz.";
             }
 
-            return isValid;
+            // Sayfanın kayıt işlemine devam edip etmeyeceğini (true/false) geriye fırlatır
+            return result.isValid;
         },
 
-        // 3. KAYIT FONKSİYONU (Dizi verileri ile bağımsız şifreyi birleştiren güvenli havuz)
-        register() {
-            console.log("Kayıt butonuna başarıyla basıldı!");
+        // 🚀 KAYIT OLMA FONKSİYONU - POST (Kesin Dizi ve Şifre Korumalı Sürüm)
+        async register() {
+            console.log("Kayıt ol fonksiyonu tetiklendi...");
 
-            if (this.formValidation()) {
-                console.log("Form doğrulandı! Yerel hafızaya (LocalStorage) yazılıyor...");
-                try {
-                    const userData = this.user[0];
-                    const userPassword = this.user.pass; // HTML'deki v-model bağından şifreyi yakalıyoruz
+            if (!this.formValidation()) {
+                console.warn("⚠️ Kayıt formu validasyon engeline takıldı.");
+                return;
+            }
 
-                    const currentUsers = JSON.parse(localStorage.getItem('registerStorage')) || [];
-
-                    // Melez verileri yerel hafızaya güvenle birleştirip push ediyoruz
-                    currentUsers.push({
-                        firstName: userData.firstName.trim(),
-                        lastName: userData.lastName.trim(),
-                        email: userData.email.trim().toLowerCase(),
-                        tel: userData.tel.trim(),
-                        pass: userPassword // Şifre artık string olarak %100 doğru şekilde gidiyor!
-                    });
-
-                    localStorage.setItem('registerStorage', JSON.stringify(currentUsers));
-                    console.log("Kullanıcı başarıyla kaydedildi! Hafızadaki toplam kişi sayısı:", currentUsers.length);
-
-                    // Modal Kapatma ve Temizleme Adımları
-                    document.querySelector('#register .btn-close')?.click();
-
-                    // Tüm form alanlarını güvenli şekilde sıfırlıyoruz
-                    this.user[0].firstName = "";
-                    this.user[0].lastName = "";
-                    this.user[0].email = "";
-                    this.user[0].tel = "";
-                    this.user[0].check = false;
-                    this.user.pass = "";
-                    this.user.repeatPass = "";
-
-                    this.showSuccessToast = true;
-
-                    setTimeout(() => {
-                        this.showSuccessToast = false;
-                        document.getElementById('loginLink')?.click();
-                    }, 3000);
-
-                } catch (e) {
-                    console.error("Kayıt hatası:", e.message);
-                    this.errors.general = "Sistemsel bir hata oluştu: " + e.message;
+            try {
+                // Dizi içindeki ilk nesneye [0] indeksiyle doğrudan erişiyoruz
+                const userData = Array.isArray(this.user) ? this.user[0] : this.user; 
+                
+                const inputEmail = String(userData.email || "").trim().toLowerCase();
+                const cleanTel = String(userData.tel || "").replace(/\s+/g, '');
+                
+                // Önce Vue değişkenlerine, boşsa aktif Kayıt Ol modalının içindeki şifre kutusuna bakar
+                let cleanPass = String(userData.pass || userData.u_pass || userData.password || this.pass || "").trim();
+                
+                if (!cleanPass) {
+                    const pwdInputs = document.querySelectorAll('input[type="password"]');
+                    for (const inp of pwdInputs) {
+                        if (inp.value && inp.value.trim() !== "") {
+                            cleanPass = inp.value.trim();
+                            break;
+                        }
+                    }
                 }
-            } else {
-                console.warn("Form kurallara uymuyor. Hatalar:", this.errors);
+
+                if (!cleanPass) {
+                    alert("Kayıt Hatası: Şifre algılanamadı. Lütfen şifrenizi tekrar yazınız.");
+                    return;
+                }
+
+                const sqlRegisterPayload = {
+                    firstName: String(userData.firstName || "").trim(),
+                    lastName: String(userData.lastName || "").trim(),
+                    email: inputEmail,
+                    tel: cleanTel,
+                    pass: cleanPass,
+                    u_firstName: String(userData.firstName || "").trim(),
+                    u_lastName: String(userData.lastName || "").trim(),
+                    u_email: inputEmail,
+                    u_tel: cleanTel,
+                    u_pass: cleanPass,
+                    u_role: "0"
+                };
+
+                console.log("🚀 Sunucuya gönderilen tam dolu paket:", sqlRegisterPayload);
+
+                const response = await fetch('http://localhost:3001/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(sqlRegisterPayload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Sunucu kayıt isteğini reddetti.");
+                }
+
+                const responseData = await response.json();
+                console.log("✅ Kullanıcı veritabanına mühürlendi:", responseData);
+
+                this.showRegisterToast = true;
+                
+                // Formu orijinal dizi yapısını bozmadan sıfırlıyoruz
+                this.user = [{ firstName: "", lastName: "", email: "", tel: "", pass: "", u_pass: "", repeatPass: "", check: false }];
+                
+                document.getElementById('registerClose')?.click();
+
+                setTimeout(() => {
+                    this.showRegisterToast = false;
+                    document.getElementById('loginModalButton')?.click();
+                }, 2500);
+
+            } catch (error) {
+                console.error("❌ Kayıt Olma Hatası:", error);
+                alert("Kayıt Hatası: " + error.message);
             }
         },
 
@@ -683,31 +685,30 @@ export default {
             }
         },
 
-        // 5. GİRİŞ FORMU DOĞRULAMA
+        // 🚀 5. GİRİŞ FORMU DOĞRULAMA (Hocanın İstediği Merkezi validation.js Bağlantılı Sürüm)
         loginValidation() {
+            // Her doğrulama başında hata mesajı havuzunu temizliyoruz
             this.errors = { email: '', pass: '', check: '', general: '' };
-            let isValid = true;
-            const loginData = this.loginUser;
 
-            if (!loginData.email || !loginData.email.trim() || !loginData.email.includes('@')) {
-                this.errors.email = "Lütfen geçerli bir e-posta adresi giriniz.";
-                isValid = false;
+            // 🌸 MERKEZİ MOTOR MÜHÜRÜ: validation.js içerisindeki login süzgecine form verilerini paslıyoruz
+            const result = validateForm.login(
+                this.loginUser.email, 
+                this.loginUser.pass, 
+                this.loginUser.check
+            );
+
+            // Eğer dışarıdaki dosyada bir hata yakalandıysa, mesajları doğrudan senin local errors nesnene doldurur
+            if (!result.isValid) {
+                this.errors.email = result.errors.email;
+                this.errors.pass = result.errors.pass;
+                this.errors.check = result.errors.check;
             }
 
-            if (!loginData.pass || loginData.pass.length < 6) {
-                this.errors.pass = "Şifreniz en az 6 karakter olmalıdır.";
-                isValid = false;
-            }
-
-            if (!loginData.check) {
-                this.errors.check = "Lütfen robot olmadığınızı doğrulayın.";
-                isValid = false;
-            }
-
-            return isValid;
+            // Sayfanın giriş işlemine devam edip etmeyeceğini (true/false) geriye fırlatır
+            return result.isValid;
         },
 
-        // 6. ANA GİRİŞ FONKSİYONU (Tamamen Yerleşik Fetch API Uyumlu - E-posta Mühürlü Sürüm)
+        // 6. ANA GİRİŞ FONKSİYONU (Hocanın İstediği JWT Token Sistemli - Sıfır Hatalı Sürüm)
         async login() {
             console.log("Giriş yap fonksiyonu tetiklendi. Seçili Rol:", this.selectedRole);
 
@@ -719,7 +720,7 @@ export default {
                 const inputEmail = loginData.email.trim().toLowerCase();
                 const inputPass = loginData.pass;
 
-                // DOĞRU PORT: Sizin sunucunuz 3001 portunda çalışıyor
+                // DOĞRU PORT: Sunucunuz 3001 portunda çalışıyor
                 const response = await fetch('http://localhost:3001/api/login', {
                     method: 'POST',
                     headers: {
@@ -741,65 +742,30 @@ export default {
 
                 // Backend'den başarılı sonuç döndüğünde kullanıcı verilerini alıyoruz
                 if (responseData && responseData.success) {
-                    const userData = responseData.user;
-
-                    // ÖNEMLİ NOT: Terminal çıktınızda veritabanından gelen alan 'u_role' olarak görünüyor!
-                    // Kodunuzdaki u_active mantığını u_role ile senkronize ediyoruz.
-                    const dbActiveStatus = String(userData.u_role || userData.u_active);
-
-                    // Arayüzdeki seçim kontrolü: 'admin' seçtiyse role '1' olmalı
-                    if (this.selectedRole === 'admin' && dbActiveStatus !== '1') {
-                        this.errors.general = "Bu alandan sadece yetkili admin girişi yapılabilir!";
-                        return;
-                    }
-
-                    // Arayüzdeki seçim kontrolü: 'user' seçtiyse role '0' olmalı
-                    if (this.selectedRole === 'user' && dbActiveStatus === '1') {
-                        this.errors.general = "Admin hesabı ile kullanıcı panelinden giriş yapılamaz. Lütfen Admin Girişi butonunu seçin.";
-                        return;
-                    }
-
-                    // Başarılı giriş sonrası oturum bilgilerini saklama (Session Storage)
-                    this.loggedInUserName = `${userData.u_firstName} ${userData.u_lastName}`;
-                    sessionStorage.setItem("isLoggedIn", "1");
-                    sessionStorage.setItem("role", dbActiveStatus); // '1' veya '0'
-                    sessionStorage.setItem("userName", this.loggedInUserName);
-
-                    // Sipariş geçmişinin otomatik okuyabilmesi için eklenen altın mühür:
-                    localStorage.setItem('userEmail', userData.u_email || inputEmail);
-
-
-                    // ============================================================
-                    // 🚀 KRİTİK PROFESYONEL MÜHÜR:
-                    // user-orders.vue sayfasının e-postayı dinamik yakalayabilmesi için
-                    // veritabanından (SQL) dönen u_email veya inputEmail değerini kaydediyoruz.
-                    // ============================================================
-                    const gercekEmail = userData.u_email || userData.email || inputEmail;
-                    localStorage.setItem('userEmail', gercekEmail);
-                    sessionStorage.setItem('userEmail', gercekEmail);
-                    localStorage.setItem('user', JSON.stringify({
-                        firstName: userData.u_firstName,
-                        lastName: userData.u_lastName,
-                        email: gercekEmail
-                    }));
-
-                    // Modalları kapatma işlemleri
-                    document.getElementById('loginClose')?.click();
-                    document.querySelector('#loginModal .btn-close')?.click();
+                    
+                    // HOCANIN İSTEDİĞİ KRİTİK KURAL: SessionStorage'a şifreli JWT anahtarını kilitliyoruz
+                    sessionStorage.setItem("token", responseData.token);
+                    sessionStorage.setItem("userName", `${responseData.user.firstName} ${responseData.user.lastName}`);
+                    
+                    // user-orders sayfasının süzme işlemi için gerekli e-postayı da yedekliyoruz
+                    localStorage.setItem('userEmail', inputEmail);
 
                     // Formu sıfırla ve Toast mesajını göster
                     this.loginUser = { email: "", pass: "", check: false };
                     this.showLoginToast = true;
 
-                    // 3 saniye sonra ilgili panele yönlendir
+                    // Modalları kapatma işlemleri
+                    document.getElementById('loginClose')?.click();
+
+                    // Rota yönlendirmesi: Backend'den gelen role göre sayfaya uçuruyoruz
                     setTimeout(() => {
                         this.showLoginToast = false;
-                        if (dbActiveStatus === "1") {
+                        if (responseData.user.role === "1") {
                             this.$router.push("/admin").catch(() => { });
                         } else {
                             this.$router.push("/user").catch(() => { });
                         }
-                    }, 3000);
+                    }, 2500);
 
                 } else {
                     // Backend şifre yanlış veya kullanıcı yok dediyse
@@ -811,7 +777,6 @@ export default {
                 this.errors.general = "Sistemsel bir hata oluştu veya sunucuya bağlanılamadı.";
             }
         },
-
 
         // Aktif Arama Fonksiyonu
         search() {

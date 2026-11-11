@@ -1,12 +1,34 @@
 <template>
     <div class="container py-4">
         <!-- MAĞAZA BAŞLIĞI -->
-        <div class="text-center  mt-4  mb-5">
+        <div class="text-center mt-4 mb-5">
             <h1 class="fw-bold" style="color: #C71585;">Gökçe Hilal Akademi Mağazası</h1>
             <p class="text-muted">Ruhsal Şifa İlmi çalışmalarıma, özel içeriklerime, aromaterapi karışımlarıma ve telkin müziklerime buradan ulaşabilirsiniz.</p>
         </div>
 
-        <!-- ÜRÜN KARTLARI LİSTESİ -->
+        <!-- 🚀 HOCANIN İSTEDİĞİ CANLI ÜRÜN FİLTRELEME VE SIRALAMA PANELİ -->
+        <div class="row g-3 mb-4 mt-1 bg-white rounded-3  align-items-center mx-1">
+            <!-- İsim ile Canlı Arama Kutusu -->
+            <div class="col-12 col-md-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" 
+                           v-model="filterSearch" 
+                           class="form-control border-start-0 shadow-none ps-1" 
+                           placeholder="Eğitim veya program adı arayın..." style="height: 38px; font-size: 13px;" />
+                </div>
+            </div>
+            <!-- Fiyat ve Alfabetik Sıralama Dropdown Menüsü -->
+            <div class="col-12 col-md-6">
+                <select v-model="filterSort" class="form-select form-select-sm shadow-none text-secondary" style="height: 38px; font-size: 13px;">
+                    <option value="">Varsayılan Sıralama</option>
+                    <option value="price-asc">Fiyat: Ucuzdan Pahalıya</option>
+                    <option value="price-desc">Fiyat: Pahalıdan Ucuza</option>
+                    <option value="name-asc">İsim: A'dan Z'ye</option>
+                </select>
+            </div>
+        </div>
+
         <!-- ÜRÜN KARTLARI LİSTESİ (1 SATIRA 5 ADET DİKEY KART) -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
             <div class="col" v-for="(product, index) in filteredProducts" :key="product.p_id">
@@ -29,8 +51,7 @@
                     <!-- Kart Gövdesi -->
                     <div class="card-body d-flex flex-column justify-content-between p-2_5" style="font-size: 13px;">
                         <div>
-                            <span class="text-secondary opacity-75 d-block mb-1" style="font-size: 11px;">Dijital
-                                Program</span>
+                            <span class="text-secondary opacity-75 d-block mb-1" style="font-size: 11px;">Dijital Program</span>
                             <!-- Yazıların taşmasını önlemek için 2 satır sınırı -->
                             <h6 class="card-title fw-bold text-dark mb-2 text-uppercase product-title-two-lines">
                                 {{ product.p_name }}
@@ -43,14 +64,16 @@
                                 <span class="fw-bold text-success fs-6 m-0">
                                     {{ product.p_price }}₺
                                 </span>
-                                <span class="text-muted" style="font-size: 11px;">Stok: <b>{{ product.p_stock
-                                }}</b></span>
+                                <span class="text-muted" style="font-size: 11px;">Stok: <b>{{ product.p_stock }}</b></span>
                             </div>
 
                             <!-- Yuvarlatılmış Köşeli Sepet Butonu (Radius: 5px) -->
+                            <!-- Stok 0 olduğunda buton otomatik kilitlenir -->
                             <button @click="addCart(product.p_id)"
+                                :disabled="product.p_stock === 0"
                                 class="btn btn-kibar-yesil w-100 py-1_5 fw-semibold sepet-buton">
-                                <i class="bi bi-cart-plus me-1"></i>Sepete Ekle
+                                <i class="bi" :class="product.p_stock === 0 ? 'bi-x-circle me-1' : 'bi-cart-plus me-1'"></i>
+                                {{ product.p_stock === 0 ? 'Tükendi' : 'Sepete Ekle' }}
                             </button>
 
                         </div>
@@ -59,8 +82,14 @@
             </div>
         </div>
 
+        <!-- Arama Kriterine Uygun Ürün Kalmazsa Gösterilecek Zarif Mesaj -->
+        <div v-if="filteredProducts.length === 0" class="text-center text-muted py-5 w-100">
+            <i class="bi bi-search fs-2 d-block mb-2 text-secondary opacity-50"></i>
+            Aradığınız kriterlere uygun akademi ürünü veya program bulunamadı.
+        </div>
     </div>
 </template>
+
 
 <script>
 export default {
@@ -68,35 +97,69 @@ export default {
     data() {
         return {
             products: [], // Veritabanından gelen ham ürünler
-            baseUrl: "http://localhost:3001"
+            baseUrl: "http://localhost:3001",
+            // 🚀 HOCANIN İSTEDİĞİ CANLI PANEL BAĞLARI
+            filterSearch: "",
+            filterSort: ""
         };
     },
     mounted() {
         this.getProducts(); // Sayfa açılır açılmaz verileri çeker
     },
     computed: {
-        // Ürünlerin ekranda listelenmesini ve arama çubuğunu yöneten güvenli filtre motoru
+        // 🚀 Üst menü aramasını, panel içi aramayı ve fiyat/ad sıralamasını tek merkezden yöneten süzgeç motoru
         filteredProducts() {
-            // Eğer veritabanından henüz veri gelmediyse veya boşsa boş dizi dön, çökmeyi önle
             if (!this.products || !Array.isArray(this.products)) {
                 return [];
             }
 
-            // URL'deki (?q=...) arama parametresini yakalar, yoksa boş metin kabul eder
-            const searchQuery = (this.$route.query && this.$route.query.q)
+            // Orijinal veritabanı listesini bozmamak için kopya dizi oluşturuyoruz
+            let result = [...this.products];
+
+            // ==========================================
+            // SÜZGEÇ 1: ÜST MENÜDEN GELEN SORGULAR (?q=...)
+            // ==========================================
+            const urlQuery = (this.$route.query && this.$route.query.q)
                 ? String(this.$route.query.q).toLowerCase().trim()
                 : "";
-
-            // Eğer arama çubuğu boşsa, veritabanından gelen tüm ürünleri doğrudan listele
-            if (!searchQuery) {
-                return this.products;
+            
+            if (urlQuery) {
+                result = result.filter(product => {
+                    const productName = product && product.p_name ? String(product.p_name).toLowerCase() : "";
+                    return productName.includes(urlQuery);
+                });
             }
 
-            // Arama yapıldıysa, sadece harfleri eşleşen ürünleri süz
-            return this.products.filter(product => {
-                const productName = product && product.p_name ? String(product.p_name).toLowerCase() : "";
-                return productName.includes(searchQuery);
-            });
+            // ==========================================
+            // SÜZGEÇ 2: SAYFA İÇİNDEKİ ARAMA KUTUSU (filterSearch)
+            // ==========================================
+            if (this.filterSearch && this.filterSearch.trim() !== "") {
+                const innerQuery = this.filterSearch.trim().toLowerCase();
+                result = result.filter(product => {
+                    const productName = product && product.p_name ? String(product.p_name).toLowerCase() : "";
+                    return productName.includes(innerQuery);
+                });
+            }
+
+            // ==========================================
+            // SÜZGEÇ 3: FİYAT VE AD ALFABETİK SIRALAMA MOTORU
+            // ==========================================
+            if (this.filterSort === "price-asc") {
+                // Fiyat: Ucuzdan Pahalıya Sıralama
+                result.sort((a, b) => Number(a.p_price || 0) - Number(b.p_price || 0));
+            } else if (this.filterSort === "price-desc") {
+                // Fiyat: Pahalıdan Ucuza Sıralama
+                result.sort((a, b) => Number(b.p_price || 0) - Number(a.p_price || 0));
+            } else if (this.filterSort === "name-asc") {
+                // İsim: A'den Z'ye Alfabetik Sıralama (Türkçe Karakter Uyumlu)
+                result.sort((a, b) => {
+                    const nameA = String(a.p_name || "");
+                    const nameB = String(b.p_name || "");
+                    return nameA.localeCompare(nameB, 'tr');
+                });
+            }
+
+            return result;
         }
     },
     methods: {
@@ -107,7 +170,6 @@ export default {
 
                 const data = await res.json();
 
-                // Gelen verinin dizi formatında olduğundan emin oluyoruz
                 if (Array.isArray(data)) {
                     this.products = data;
                 } else {
@@ -127,7 +189,6 @@ export default {
             if (secilenUrun) {
                 console.log("Ürün bulundu, tarayıcı ana hafızasındaki metoda uçuruluyor:", secilenUrun);
 
-                // KESİN ÇÖZÜM: Tüm Vue bağları ve hataları bypass edildi, tarayıcı belleğindeki fonksiyon doğrudan tetiklendi!
                 if (window.küreselSepeteEkle) {
                     window.küreselSepeteEkle(secilenUrun);
                 } else {
@@ -135,12 +196,9 @@ export default {
                 }
             }
         }
-
     }
 };
-
 </script>
-
 
 <style scoped>
 /* Resmin Oranlarını Asla Bozmayan ve Kırpmayan Özel Sınıf */
@@ -150,13 +208,11 @@ export default {
     object-fit: contain;
     object-position: center;
     border-radius: 12px !important;
-    /* Fotoğraf köşeleri tam 15px yapıldı */
 }
 
 /* Ürün Kartının Genel Ayarları */
 .custom-product-card {
     border-radius: 12px !important;
-    /* Kartın dış köşeleri de 15px yapıldı */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -165,7 +221,6 @@ export default {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06) !important;
 }
-
 
 .btn-kibar-yesil {
     background-color: transparent;
@@ -176,17 +231,23 @@ export default {
     border-radius: 5px;
 }
 
-.btn-kibar-yesil:hover {
+.btn-kibar-yesil:hover:not([disabled]) {
     background-color: #008000;
     color: #ffffff !important;
+}
+
+/* 🚀 HOCANIN KURALI İÇİN TÜKENDİ BUTON STİLİ */
+.btn-kibar-yesil:disabled {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    border: 1px solid #dee2e6 !important;
+    cursor: not-allowed;
 }
 
 .card-title {
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    /* Safari ve Chrome uyumluluğu için */
     line-clamp: 2;
-    /* 🟢 Standart mülkiyet (Editörün istediği ekleme) */
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -199,3 +260,4 @@ export default {
     transform: scale(1.04);
 }
 </style>
+

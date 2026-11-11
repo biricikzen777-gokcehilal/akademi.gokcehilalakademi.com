@@ -310,6 +310,43 @@ app.delete("/api/messages/:id", async (req, res) => {
 
 
 
+// ! 5. TOKEN DOĞRULAMA ROTASI - POST (Router Guard İçin Canlı Doğrulama Mekanizması)
+app.post("/api/verify-token", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(401).json({ valid: false, message: "Token bulunamadı." });
+    }
+
+    // Şifreli anahtarı backend sırrımızla çözüyoruz
+    jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ valid: false, message: "Geçersiz veya süresi dolmuş token." });
+      }
+
+      // Çözülen token içindeki id ile veritabanından güncel rolü çekiyoruz
+      const [rows] = await db.query("SELECT u_role, u_active FROM users WHERE u_id = ?", [decoded.id]);
+      
+      if (rows.length === 0) {
+        return res.status(404).json({ valid: false, message: "Kullanıcı bulunamadı." });
+      }
+
+      const dbRole = String(rows[0].u_role || rows[0].u_active);
+
+      // Canlı bilgileri ön yüze teslim ediyoruz
+      return res.status(200).json({
+        valid: true,
+        role: dbRole
+      });
+    });
+
+  } catch (err) {
+    console.error("❌ Token Doğrulama Sunucu Hatası:", err.message);
+    return res.status(500).json({ valid: false, error: "Sunucu hatası." });
+  }
+});
+
 // ==========================================
 //           SİPARİŞ YÖNETİMİ ROTALARI
 // ==========================================
@@ -351,7 +388,7 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
-// ! 3. ORDERS EKLE - POST (Mükerrer/Çift kayıt kuralı temizlendi - %100 Uyumlu Tek Sürüm)
+// ! 3. ORDERS EKLE - POST (Sipariş Oluşturur ve Ürün Stoklarından 1 Adet Düşer)
 app.post("/api/orders", async (req, res) => {
   try {
     const data = req.body;
@@ -360,17 +397,19 @@ app.post("/api/orders", async (req, res) => {
       return res.status(400).json({ error: "Sepet boş geldi." });
     }
 
+    // 1. Ürün isimlerini birleştirip fatura bilgilerini hazırlıyoruz
     const urunIsimleri = data.sepet.map(u => u.name || "Bilinmeyen Ürün").join(", ");
     const rastgeleSiparisNo = "SP-" + Math.floor(100000 + Math.random() * 900000);
     const tamIsim = ((data.firstName || "İsim") + " " + (data.lastName || "Soyisim")).trim();
 
-    const query = `
+    // 2. Siparişi orders tablosuna ekleyen ana sorgu
+    const orderQuery = `
       INSERT INTO orders 
       (o_no, o_tc, o_products, o_person, o_email, o_phone, o_adress, o_status, o_zip, o_amount) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [
+    const orderValues = [
       rastgeleSiparisNo,
       data.TC ? String(data.TC).trim().substring(0, 11) : "11111111111",
       urunIsimleri,
@@ -383,20 +422,44 @@ app.post("/api/orders", async (req, res) => {
       data.amount ? Number(data.amount) : 0
     ];
 
-    const [result] = await db.query(query, values);
-    
+    const [result] = await db.query(orderQuery, orderValues);
+    console.log(`✅ Sipariş veritabanına eklendi. ID: #${result.insertId}`);
+
+    // ============================================================
+    // 🚀 HOCANIN İSTEDİĞİ KRİTİK STOK DÜŞME MOTORU:
+    // Sepetteki her bir ürünü SQL döngüsüne sokarak stoktan 1 adet düşüyoruz.
+    // Not: Eğer veritabanınızda ürün adı yerine ID tabanlı eşleşme varsa veya sütun adı p_stock 
+    // değilse, sorguyu kendi tablonuza göre ("p_name = ?" veya "p_id = ?") güncelleyebilirsiniz.
+    // ============================================================
+    for (const urun of data.sepet) {
+      const urunAdi = String(urun.name).trim();
+      
+      // SQL UPDATE: Stok miktarını anlık olarak 1 adet azaltır
+      // Sütun adı phpMyAdmin'de ne ise (Örn: p_stock, stock, urun_stok) orayı düzenleyebilirsiniz.
+      const stockUpdateQuery = "UPDATE products SET p_stock = p_stock - 1 WHERE p_name = ? AND p_stock > 0";
+      
+      const [stockResult] = await db.query(stockUpdateQuery, [urunAdi]);
+      
+      if (stockResult.affectedRows > 0) {
+        console.log(`📉 '${urunAdi}' ürünü başarıyla satıldı, stoktan 1 adet düşüldü.`);
+      } else {
+        console.warn(`⚠️ '${urunAdi}' ürünü için stok düşülemedi (Stok yetersiz veya ürün adı bulunamadı).`);
+      }
+    }
+
     return res.status(201).json({ 
       success: true, 
-      message: "Sipariş eklendi.", 
+      message: "Sipariş eklendi ve stoklar güncellendi.", 
       orderId: result.insertId,
       orderNo: rastgeleSiparisNo
     });
   }
   catch (err) {
-    console.error("❌ SQL Sipariş Ekleme Hatası Detayı:", err.message);
+    console.error("❌ SQL Sipariş / Stok Güncelleme Hatası Detayı:", err.message);
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 // ! 4. ORDERS GÜNCELLE - PUT
 app.put("/api/orders/:id", async (req, res) => {
