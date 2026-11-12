@@ -3,7 +3,8 @@
         <!-- MAĞAZA BAŞLIĞI -->
         <div class="text-center mt-4 mb-5">
             <h1 class="fw-bold" style="color: #C71585;">Gökçe Hilal Akademi Mağazası</h1>
-            <p class="text-muted">Ruhsal Şifa İlmi çalışmalarıma, özel içeriklerime, aromaterapi karışımlarıma ve telkin müziklerime buradan ulaşabilirsiniz.</p>
+            <p class="text-muted">Ruhsal Şifa İlmi çalışmalarıma, özel içeriklerime, aromaterapi karışımlarıma ve telkin
+                müziklerime buradan ulaşabilirsiniz.</p>
         </div>
 
         <!-- 🚀 HOCANIN İSTEDİĞİ CANLI ÜRÜN FİLTRELEME VE SIRALAMA PANELİ -->
@@ -12,15 +13,14 @@
             <div class="col-12 col-md-6">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" 
-                           v-model="filterSearch" 
-                           class="form-control border-start-0 shadow-none ps-1" 
-                           placeholder="Eğitim veya program adı arayın..." style="height: 38px; font-size: 13px;" />
+                    <input type="text" v-model="filterSearch" class="form-control border-start-0 shadow-none ps-1"
+                        placeholder="Eğitim veya program adı arayın..." style="height: 38px; font-size: 13px;" />
                 </div>
             </div>
             <!-- Fiyat ve Alfabetik Sıralama Dropdown Menüsü -->
             <div class="col-12 col-md-6">
-                <select v-model="filterSort" class="form-select form-select-sm shadow-none text-secondary" style="height: 38px; font-size: 13px;">
+                <select v-model="filterSort" class="form-select form-select-sm shadow-none text-secondary"
+                    style="height: 38px; font-size: 13px;">
                     <option value="">Varsayılan Sıralama</option>
                     <option value="price-asc">Fiyat: Ucuzdan Pahalıya</option>
                     <option value="price-desc">Fiyat: Pahalıdan Ucuza</option>
@@ -51,7 +51,8 @@
                     <!-- Kart Gövdesi -->
                     <div class="card-body d-flex flex-column justify-content-between p-2_5" style="font-size: 13px;">
                         <div>
-                            <span class="text-secondary opacity-75 d-block mb-1" style="font-size: 11px;">Dijital Program</span>
+                            <span class="text-secondary opacity-75 d-block mb-1" style="font-size: 11px;">Dijital
+                                Program</span>
                             <!-- Yazıların taşmasını önlemek için 2 satır sınırı -->
                             <h6 class="card-title fw-bold text-dark mb-2 text-uppercase product-title-two-lines">
                                 {{ product.p_name }}
@@ -64,15 +65,16 @@
                                 <span class="fw-bold text-success fs-6 m-0">
                                     {{ product.p_price }}₺
                                 </span>
-                                <span class="text-muted" style="font-size: 11px;">Stok: <b>{{ product.p_stock }}</b></span>
+                                <span class="text-muted" style="font-size: 11px;">Stok: <b>{{ product.p_stock
+                                        }}</b></span>
                             </div>
 
                             <!-- Yuvarlatılmış Köşeli Sepet Butonu (Radius: 5px) -->
                             <!-- Stok 0 olduğunda buton otomatik kilitlenir -->
-                            <button @click="addCart(product.p_id)"
-                                :disabled="product.p_stock === 0"
+                            <button @click="addCart(product.p_id)" :disabled="product.p_stock === 0"
                                 class="btn btn-kibar-yesil w-100 py-1_5 fw-semibold sepet-buton">
-                                <i class="bi" :class="product.p_stock === 0 ? 'bi-x-circle me-1' : 'bi-cart-plus me-1'"></i>
+                                <i class="bi"
+                                    :class="product.p_stock === 0 ? 'bi-x-circle me-1' : 'bi-cart-plus me-1'"></i>
                                 {{ product.p_stock === 0 ? 'Tükendi' : 'Sepete Ekle' }}
                             </button>
 
@@ -113,19 +115,20 @@ export default {
                 return [];
             }
 
-            // Orijinal veritabanı listesini bozmamak için kopya dizi oluşturuyoruz
             let result = [...this.products];
 
             // ==========================================
             // SÜZGEÇ 1: ÜST MENÜDEN GELEN SORGULAR (?q=...)
             // ==========================================
             const urlQuery = (this.$route.query && this.$route.query.q)
-                ? String(this.$route.query.q).toLowerCase().trim()
+                ? String(this.$route.query.q).toLocaleLowerCase('tr-TR').trim()
                 : "";
-            
+
             if (urlQuery) {
                 result = result.filter(product => {
-                    const productName = product && product.p_name ? String(product.p_name).toLowerCase() : "";
+                    const productName = product && product.p_name
+                        ? String(product.p_name).toLocaleLowerCase('tr-TR')
+                        : "";
                     return productName.includes(urlQuery);
                 });
             }
@@ -134,9 +137,11 @@ export default {
             // SÜZGEÇ 2: SAYFA İÇİNDEKİ ARAMA KUTUSU (filterSearch)
             // ==========================================
             if (this.filterSearch && this.filterSearch.trim() !== "") {
-                const innerQuery = this.filterSearch.trim().toLowerCase();
+                const innerQuery = this.filterSearch.trim().toLocaleLowerCase('tr-TR');
                 result = result.filter(product => {
-                    const productName = product && product.p_name ? String(product.p_name).toLowerCase() : "";
+                    const productName = product && product.p_name
+                        ? String(product.p_name).toLocaleLowerCase('tr-TR')
+                        : "";
                     return productName.includes(innerQuery);
                 });
             }
@@ -145,13 +150,10 @@ export default {
             // SÜZGEÇ 3: FİYAT VE AD ALFABETİK SIRALAMA MOTORU
             // ==========================================
             if (this.filterSort === "price-asc") {
-                // Fiyat: Ucuzdan Pahalıya Sıralama
                 result.sort((a, b) => Number(a.p_price || 0) - Number(b.p_price || 0));
             } else if (this.filterSort === "price-desc") {
-                // Fiyat: Pahalıdan Ucuza Sıralama
                 result.sort((a, b) => Number(b.p_price || 0) - Number(a.p_price || 0));
             } else if (this.filterSort === "name-asc") {
-                // İsim: A'den Z'ye Alfabetik Sıralama (Türkçe Karakter Uyumlu)
                 result.sort((a, b) => {
                     const nameA = String(a.p_name || "");
                     const nameB = String(b.p_name || "");
@@ -161,6 +163,7 @@ export default {
 
             return result;
         }
+
     },
     methods: {
         async getProducts() {
@@ -260,4 +263,3 @@ export default {
     transform: scale(1.04);
 }
 </style>
-

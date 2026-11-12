@@ -567,7 +567,7 @@ export default {
                 this.errors.pass = result.errors.pass;
                 this.errors.repeatPass = result.errors.repeatPass;
                 this.errors.check = result.errors.check;
-                
+
                 this.errors.general = "Lütfen formdaki hataları düzelterek tekrar deneyiniz.";
             }
 
@@ -586,14 +586,14 @@ export default {
 
             try {
                 // Dizi içindeki ilk nesneye [0] indeksiyle doğrudan erişiyoruz
-                const userData = Array.isArray(this.user) ? this.user[0] : this.user; 
-                
+                const userData = Array.isArray(this.user) ? this.user[0] : this.user;
+
                 const inputEmail = String(userData.email || "").trim().toLowerCase();
                 const cleanTel = String(userData.tel || "").replace(/\s+/g, '');
-                
+
                 // Önce Vue değişkenlerine, boşsa aktif Kayıt Ol modalının içindeki şifre kutusuna bakar
                 let cleanPass = String(userData.pass || userData.u_pass || userData.password || this.pass || "").trim();
-                
+
                 if (!cleanPass) {
                     const pwdInputs = document.querySelectorAll('input[type="password"]');
                     for (const inp of pwdInputs) {
@@ -642,10 +642,10 @@ export default {
                 console.log("✅ Kullanıcı veritabanına mühürlendi:", responseData);
 
                 this.showRegisterToast = true;
-                
+
                 // Formu orijinal dizi yapısını bozmadan sıfırlıyoruz
                 this.user = [{ firstName: "", lastName: "", email: "", tel: "", pass: "", u_pass: "", repeatPass: "", check: false }];
-                
+
                 document.getElementById('registerClose')?.click();
 
                 setTimeout(() => {
@@ -692,8 +692,8 @@ export default {
 
             // 🌸 MERKEZİ MOTOR MÜHÜRÜ: validation.js içerisindeki login süzgecine form verilerini paslıyoruz
             const result = validateForm.login(
-                this.loginUser.email, 
-                this.loginUser.pass, 
+                this.loginUser.email,
+                this.loginUser.pass,
                 this.loginUser.check
             );
 
@@ -742,11 +742,11 @@ export default {
 
                 // Backend'den başarılı sonuç döndüğünde kullanıcı verilerini alıyoruz
                 if (responseData && responseData.success) {
-                    
+
                     // HOCANIN İSTEDİĞİ KRİTİK KURAL: SessionStorage'a şifreli JWT anahtarını kilitliyoruz
                     sessionStorage.setItem("token", responseData.token);
                     sessionStorage.setItem("userName", `${responseData.user.firstName} ${responseData.user.lastName}`);
-                    
+
                     // user-orders sayfasının süzme işlemi için gerekli e-postayı da yedekliyoruz
                     localStorage.setItem('userEmail', inputEmail);
 
@@ -778,33 +778,25 @@ export default {
             }
         },
 
-        // Aktif Arama Fonksiyonu
+        // Aktif Arama Fonksiyonu (App.vue)
         search() {
-            // Kullanıcının yazdığı kelimeyi temizle ve küçük harfe çevir
-            const query = this.nav_search ? this.nav_search.trim().toLowerCase() : "";
+            const query = this.nav_search ? this.nav_search.trim().toLocaleLowerCase('tr-TR') : "";
 
             if (!query) {
-                console.warn("Arama terimi boş.");
+                // Arama boşaltılırsa URL sorgusunu temizle ki tüm ürünler geri gelsin
+                if (this.$route.path === '/product' && this.$route.query.q) {
+                    this.$router.replace({ path: '/product', query: {} }).catch(() => { });
+                }
                 return;
             }
 
             console.log("Sitede aranan kelime:", query);
 
-            // EĞER KULLANICI ADMİN VEYA BAŞKA BİR PANELDEYSE DOĞRUDAN ÜRÜNLER SAYFASINA FIRLATIR
-            // Arama sonuçlarının listelenebilmesi için kullanıcının ürünler rotasında olması gerekir
-            if (this.$route.path !== '/product') {
-                this.$router.push({
-                    path: '/product',
-                    query: { q: query } // Aranan kelimeyi URL parametresi olarak (/product?q=kelime) taşır
-                }).catch(() => { });
-            } else {
-                // Eğer kullanıcı zaten ürünler sayfasındaysa sayfayı değiştirmeden küresel event tetikler
-                // veya sayfa içindeki filtreleme fonksiyonunu doğrudan çalıştırır
-                window.dispatchEvent(new CustomEvent('global-search', { detail: query }));
-            }
-
-            // Arama yapıldıktan sonra input kutusunun içini temizlemek isterseniz bu satırı aktif bırakın:
-            // this.nav_search = "";
+            // Hangi sayfada olursa olsun /product?q=kelime adresine yönlendirir/günceller
+            this.$router.push({
+                path: '/product',
+                query: { q: query }
+            }).catch(() => { });
         },
 
         logout() {
