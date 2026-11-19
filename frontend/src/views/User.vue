@@ -127,11 +127,10 @@
                     <userOrders />
                 </div>
 
+                <!-- 5. PROFİL ALANI (state === 'profile') -->
                 <div v-else-if="state === 'profile'">
-                    <userProfile />
+                    <userProfile @profile-updated="Username = $event" />
                 </div>
-
-
 
             </div>
 
@@ -155,7 +154,8 @@ export default {
         userEducations,
         userSertificates,
         userOrders,
-        userProducts
+        userProducts,
+        userProfile,
     },
 
     data() {
@@ -228,7 +228,7 @@ export default {
                 }).join('')));
 
                 if (payload && payload.id) {
-                    this.getUsername(payload.id); // (User.vue içinde burası this.currentUserId = payload.id; olmalı)
+                    this.currentUserId = payload.id; // (User.vue içinde burası this.currentUserId = payload.id; olmalı)
                 } else {
                     this.$router.push("/");
                 }

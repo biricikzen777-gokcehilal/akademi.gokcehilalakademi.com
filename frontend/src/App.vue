@@ -745,6 +745,8 @@ export default {
 
                     // HOCANIN İSTEDİĞİ KRİTİK KURAL: SessionStorage'a şifreli JWT anahtarını kilitliyoruz
                     sessionStorage.setItem("token", responseData.token);
+                    sessionStorage.setItem("isLoggedIn", "1");
+                    sessionStorage.setItem("role", String(responseData.user.role));
                     sessionStorage.setItem("userName", `${responseData.user.firstName} ${responseData.user.lastName}`);
 
                     // user-orders sayfasının süzme işlemi için gerekli e-postayı da yedekliyoruz

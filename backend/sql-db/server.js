@@ -332,7 +332,7 @@ app.post("/api/verify-token", async (req, res) => {
         return res.status(404).json({ valid: false, message: "Kullanıcı bulunamadı." });
       }
 
-      const dbRole = String(rows[0].u_role || rows[0].u_active);
+      const dbRole = String(rows[0].u_role);
 
       // Canlı bilgileri ön yüze teslim ediyoruz
       return res.status(200).json({
@@ -762,7 +762,7 @@ app.post("/api/login", async (req, res) => {
     const token = jwt.sign(
       { 
         id: userData.u_id, 
-        role: String(userData.u_role || userData.u_active) 
+        role: String(userData.u_role)
       }, 
       JWT_SECRET, 
       { expiresIn: "24h" } // Anahtar 24 saat boyunca geçerli olacak
@@ -778,7 +778,7 @@ app.post("/api/login", async (req, res) => {
       user: {
         firstName: userData.u_firstName,
         lastName: userData.u_lastName,
-        role: String(userData.u_role || userData.u_active)
+        role: String(userData.u_role),
       }
     });
 
