@@ -144,7 +144,7 @@
                                 <div class="col-6">
                                     <label class="form-label text-muted mb-1" style="font-weight: 400;">Ürün Fiyatı
                                         (TL)*</label>
-                                    <input type="number" step="0.01" min="0"
+                                    <input type="number" step="100" min="0"
                                         class="form-control form-control-sm border-light-subtle shadow-none"
                                         v-model.number="newProduct.p_price" required placeholder="Örn: 350.00">
                                 </div>
