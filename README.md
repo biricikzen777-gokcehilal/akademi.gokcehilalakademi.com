@@ -130,11 +130,81 @@ Proje; **Vue.js 3** tabanlı modern ve duyarlı bir ön yüz ile **Node.js / Exp
 
 | Yönetim Paneli — Ürün Yönetimi | Yönetim Paneli — Profil ve Güvenlik |
 | :---: | :---: |
-| ![Admin Ürün Yönetimi](screenshots/admin-products.png) | ![Admin Profil Ayarları](screenshots/admin-profile.png) |
+| ![Admin Ürün Yönetimi](screenshots/admin-products.png) | ![Admin Profil Ayarları](screenshots/admin-panel.png) |
 
 | Öğrenci / Kullanıcı Paneli | Ödeme ve Sipariş Tamamlama |
 | :---: | :---: |
 | ![Kullanıcı Paneli](screenshots/user-panel.png) | ![Ödeme Ekranı](screenshots/checkout.png) |
+
+---
+
+## Veritabanı Kurulumu (MySQL)
+
+Projeyi yerel bilgisayarınızda çalıştırmadan önce MySQL üzerinde veritabanınızı oluşturup aşağıdaki temel tabloları tek seferde içe aktarabilirsiniz:
+
+```sql
+CREATE DATABASE IF NOT EXISTS gokce_akademi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE gokce_akademi;
+
+-- Kullanıcılar Tablosu (u_role -> 0: Öğrenci/Kullanıcı, 1: Admin)
+CREATE TABLE IF NOT EXISTS users (
+    u_id INT AUTO_INCREMENT PRIMARY KEY,
+    u_firstName VARCHAR(100) NOT NULL,
+    u_lastName VARCHAR(100) NOT NULL,
+    u_email VARCHAR(150) NOT NULL UNIQUE,
+    u_tel VARCHAR(20),
+    u_pass VARCHAR(255) NOT NULL,
+    u_role VARCHAR(5) DEFAULT '0',
+    u_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Ürünler Tablosu (3 Görsel Destekli)
+CREATE TABLE IF NOT EXISTS products (
+    p_id INT AUTO_INCREMENT PRIMARY KEY,
+    p_name VARCHAR(200) NOT NULL,
+    p_stock INT DEFAULT 0,
+    p_price DECIMAL(10, 2) NOT NULL,
+    p_desc TEXT,
+    p_img1 VARCHAR(255),
+    p_img2 VARCHAR(255),
+    p_img3 VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Siparişler Tablosu
+CREATE TABLE IF NOT EXISTS orders (
+    o_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_name VARCHAR(150) NOT NULL,
+    customer_email VARCHAR(150) NOT NULL,
+    customer_tel VARCHAR(20),
+    customer_address TEXT,
+    order_items JSON NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    order_status VARCHAR(50) DEFAULT 'Yeni Sipariş',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- İletişim Mesajları Tablosu
+CREATE TABLE IF NOT EXISTS messages (
+    m_id INT AUTO_INCREMENT PRIMARY KEY,
+    m_name VARCHAR(150) NOT NULL,
+    m_email VARCHAR(150) NOT NULL,
+    m_subject VARCHAR(200),
+    m_message TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## Geliştirme ve Test Ortamı Bilgileri
+
+* **Alan Adı Hedefi:** `://gokcehilalakademi.com`
+* **Yerel Ön Yüz (Frontend):** `http://localhost:5173`
+* **Yerel Arka Yüz (Backend API):** `http://localhost:3001`
+* **Not:** Güvenlik gereği veritabanı şifreleri ve JWT gizli anahtarları (`.env`) repoya dahil edilmemiştir; kurulum sırasında `backend/sql-db` dizininde kendi ortam değişkenlerinizi tanımlamanız yeterlidir.
 
 ---
 
