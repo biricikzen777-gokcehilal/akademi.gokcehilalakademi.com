@@ -122,6 +122,23 @@ Proje; **Vue.js 3** tabanlı modern ve duyarlı bir ön yüz ile **Node.js / Exp
 
 ---
 
+## Ekran Görüntüleri
+
+| Anasayfa & Kurumsal Vitrin | Ürünler Kataloğu & Alışveriş Sepeti |
+| :---: | :---: |
+| ![Anasayfa](screenshots/home.png) | ![Ürünler ve Sepet](screenshots/products.png) |
+
+| Yönetim Paneli — Ürün Yönetimi | Yönetim Paneli — Profil ve Güvenlik |
+| :---: | :---: |
+| ![Admin Ürün Yönetimi](screenshots/admin-products.png) | ![Admin Profil Ayarları](screenshots/admin-profile.png) |
+
+| Öğrenci / Kullanıcı Paneli | Ödeme ve Sipariş Tamamlama |
+| :---: | :---: |
+| ![Kullanıcı Paneli](screenshots/user-panel.png) | ![Ödeme Ekranı](screenshots/checkout.png) |
+
+---
+
+
 ## Kurulum ve Çalıştırma
 
 ### 1. Depoyu Klonlayın
